@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from pydoc import plainpager
 import re
 from turtle import pos
 import nltk
@@ -27,24 +28,25 @@ def build_index(in_dir, out_dict, out_postings):
     result = TermDictionary(out_dict)
 
     tempDict = {}
-    termTracker = {}
+    # termTracker = {}
     for doc in sorted([int(doc) for doc in os.listdir(in_dir)]):
         terms = generateTermArray(in_dir, doc)
 
         for term in terms:
             if term not in tempDict.keys():
-                tempDict[term] = [[doc]]
-                termTracker[term] = set()
-                termTracker[term].add(doc)
+                # tempDict[term] = [[doc]]
+                # termTracker[term] = set()
+                # termTracker[term].add(doc)
+                tempDict[term] = [set([doc])]
             
             else:
-                if term not in termTracker[term]:
-                    if (min(len(arr) for arr in tempDict[term]) <= limit):
-                        currentArrayIndex = len(tempDict[term]) - 1
-                        tempDict[term][currentArrayIndex].append(doc)
+                # if term not in termTracker[term]:
+                if (min(len(s) for s in tempDict[term]) < limit):
+                    currentSetIndex = len(tempDict[term]) - 1
+                    tempDict[term][currentSetIndex].add(doc)
 
-                    else:
-                        tempDict[term].append([doc])
+                else:
+                    tempDict[term].append(set([doc]))
 
     # print(tempDict)
 
@@ -57,10 +59,11 @@ def build_index(in_dir, out_dict, out_postings):
             for pL in postingLists:
                 pointer = f.tell()
                 result.addTerm(term, len(pL), pointer)
+                print(term)
+                print(sorted(list(pL)))
                 pickle.dump(pL, f)
 
     result.save()
-    os.remove(tempFile)
 
 
 
