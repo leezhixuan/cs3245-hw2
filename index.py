@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 import re
-from nltk.tokenize import word_tokenize, sent_tokenize
-from nltk.stem import PorterStemmer
+from turtle import pos
+import nltk
 import sys
 import getopt
 import os
+import pickle
 
 from TermDictionary import TermDictionary
 from SkipList import Node
@@ -20,52 +21,60 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
-    limit = 1000
+
+    tempFile = 'temp.txt'
+    limit = 1024
     result = TermDictionary(out_dict)
 
     tempDict = {}
+    termTracker = {}
     for doc in sorted([int(doc) for doc in os.listdir(in_dir)]):
         terms = generateTermArray(in_dir, doc)
 
         for term in terms:
             if term not in tempDict.keys():
                 tempDict[term] = [[doc]]
+                termTracker[term] = set()
+                termTracker[term].add(doc)
             
             else:
-                if (min(len(arr) for arr in tempDict[term]) < limit):
-                    currentArrayIndex = len(tempDict[term]) - 1
-                    tempDict[term][currentArrayIndex].append(doc)
+                if term not in termTracker[term]:
+                    if (min(len(arr) for arr in tempDict[term]) <= limit):
+                        currentArrayIndex = len(tempDict[term]) - 1
+                        tempDict[term][currentArrayIndex].append(doc)
 
-                else:
-                    tempDict[term].append([doc])
+                    else:
+                        tempDict[term].append([doc])
+
+    # print(tempDict)
 
     # end of processing all docs
     # format of tempDict = {term : [[doc1, doc2, ..., doc1000], [doc1001, doc1002, ..., doc2000], ...]}
     # no skipPointers yet.
 
+    with open(tempFile, 'wb') as f:
+        for term, postingLists in sorted(tempDict.items()):
+            for pL in postingLists:
+                pointer = f.tell()
+                result.addTerm(term, len(pL), pointer)
+                pickle.dump(pL, f)
 
-                        
-    
-
-
-
-
+    result.save()
+    os.remove(tempFile)
 
 
 
 
 def generateTermArray(dir, doc):
+    stemmer = nltk.stem.porter.PorterStemmer()
+
     terms = []
-    stemmer = PorterStemmer()
-
-    with open(os.path.join(dir), str(doc)) as f:
-        sentences = sent_tokenize(f.read())
-        
+    with open(os.path.join(dir, str(doc))) as file:
+        sentences = nltk.tokenize.sent_tokenize(file.read())
         for sentence in sentences:
-            words = word_tokenize(sentence)
-            terms.append([stemmer.stem(word.lower()) for word in words])
-
-    f.close()
+            words = nltk.tokenize.word_tokenize(sentence)
+            for word in words:
+                terms.append(stemmer.stem(word.lower()))
 
     return terms
     
