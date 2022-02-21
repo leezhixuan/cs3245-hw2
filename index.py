@@ -58,14 +58,20 @@ def build_index(in_dir, out_dict, out_postings):
         for term, postingLists in sorted(tempDict.items()):
             for pL in postingLists:
                 pointer = f.tell()
+                # print(pointer)
                 result.addTerm(term, len(pL), pointer)
-                print(term)
-                print(sorted(list(pL)))
-                pickle.dump(pL, f)
+                # print(term)
+                # print(sorted(list(pL)))
+                pickle.dump(sorted(list(pL)), f)
+
+
+    implementSkipPointers(out_postings, tempFile)
+    
+    # print(retrievePostingsList(tempFile, 54698))
+
+
 
     result.save()
-
-
 
 
 def generateTermArray(dir, doc):
@@ -80,7 +86,25 @@ def generateTermArray(dir, doc):
                 terms.append(stemmer.stem(word.lower()))
 
     return terms
-    
+
+
+def retrievePostingsList(file, pointer):
+    with open(file, 'rb') as f:
+        f.seek(pointer)
+        # print(f.tell())
+        return pickle.load(f)
+
+def implementSkipPointers(out_postings, file):
+    # with open(file, 'rb') as input:
+    #     with open(out_postings, 'wb') as output:
+
+    #         for line in 
+
+    with open(file, 'rb') as f:
+        for line in f:
+            print(pickle.load(f))
+
+
 
 input_directory = output_file_dictionary = output_file_postings = None
 
