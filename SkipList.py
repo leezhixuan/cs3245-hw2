@@ -25,3 +25,5 @@ class Node(object):
 
     def addNextNode(self, nextNode):
         self.next = nextNode
+
+        
