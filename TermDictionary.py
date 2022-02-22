@@ -31,5 +31,9 @@ class TermDictionary(object):
     def updatePointerList(self, term, newPointerList):
         self.termInformation[term][self.POINTERS_INDEX] = newPointerList
 
-    def getTermInformation(self):
+    def getTermDict(self):
         return self.termInformation
+
+    def getTermDocFrequency(self, term):
+        return self.termInformation[term][self.DOCFREQ_INDEX]
+    

@@ -86,7 +86,7 @@ def implementSkipPointers(out_postings, file, termDictionary):
     with open(file, 'rb') as ref:
         with open(out_postings, 'wb') as output:
 
-            termDict = termDictionary.getTermInformation()
+            termDict = termDictionary.getTermDict()
             for term in termDict:
                 pointers = termDict[term][1]
 
