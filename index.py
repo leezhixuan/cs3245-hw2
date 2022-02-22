@@ -122,17 +122,21 @@ def implementSkipPointers(out_postings, file, termDictionary):
 
 def insertSkipPointers(postings, length):
     skipInterval = int(math.sqrt(length))
+    endOfIndex = length - 1
     index = 0
 
     result = []
+    currentIndex = 0
     for docID in postings:
         node = Node(docID)
-        if (index % skipInterval == 0):
+        if (index % skipInterval == 0 and currentIndex + 1 <= endOfIndex):
             node.addSkipPointer(skipInterval)
             result.append(node)
         
         else:
             result.append(node)
+
+        currentIndex+=1
 
     return result
 
