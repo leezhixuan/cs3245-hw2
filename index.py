@@ -10,7 +10,7 @@ import pickle
 import math
 
 from TermDictionary import TermDictionary
-from SkipList import Node
+from Node import Node
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -66,11 +66,9 @@ def build_index(in_dir, out_dict, out_postings):
                 pickle.dump(sorted(list(pL)), f)
 
 
-    implementSkipPointers(out_postings, tempFile)
+    implementSkipPointers(out_postings, tempFile, result)
     
     # print(retrievePostingsList(tempFile, 54698))
-
-
 
     result.save()
 
@@ -96,25 +94,30 @@ def retrievePostingsList(file, pointer):
         return pickle.load(f)
 
 def implementSkipPointers(out_postings, file, termDictionary):
-    # with open(file, 'rb') as input:
-    #     with open(out_postings, 'wb') as output:
-
-    #         for line in 
 
     with open(file, 'rb') as ref:
-        with open(out_postings, 'rb') as output:
+        with open(out_postings, 'wb') as output:
 
-            for term in termDictionary:
-                pointers = termDictionary[term][1]
+            termDict = termDictionary.getTermInformation()
+            for term in termDict:
+                pointers = termDict[term][1]
 
+                newPointers = []
                 for pointer in pointers:
                     ref.seek(pointer)
                     postings = pickle.load(ref)
 
                     postingsWithSP = insertSkipPointers(postings, len(postings))
 
+                    newPointer = output.tell()
+                    pickle.dump(sorted(postings), output)
+                    newPointers.append(newPointer)
 
-                    
+                termDictionary.updatePointerList(term, newPointers)
+
+        output.close()
+    ref.close()
+
 
 
 def insertSkipPointers(postings, length):
@@ -123,11 +126,13 @@ def insertSkipPointers(postings, length):
 
     result = []
     for docID in postings:
+        node = Node(docID)
         if (index % skipInterval == 0):
-            result.append((docID, index + skipInterval))
+            node.addSkipPointer(skipInterval)
+            result.append(node)
         
         else:
-            result.append((docID, 0))
+            result.append(node)
 
     return result
 

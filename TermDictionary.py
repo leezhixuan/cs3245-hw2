@@ -27,3 +27,9 @@ class TermDictionary(object):
     def load(self):
         with open(self.storageLocation, 'rb') as f:
             self.termInformation = pickle.load(f)
+
+    def updatePointerList(self, term, newPointerList):
+        self.termInformation[term][self.POINTERS_INDEX] = newPointerList
+
+    def getTermInformation(self):
+        return self.termInformation
