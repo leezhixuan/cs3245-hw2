@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from pydoc import plainpager
+from pydoc import doc, plainpager
 import re
 from turtle import pos
 import nltk
@@ -7,6 +7,7 @@ import sys
 import getopt
 import os
 import pickle
+import math
 
 from TermDictionary import TermDictionary
 from SkipList import Node
@@ -94,17 +95,41 @@ def retrievePostingsList(file, pointer):
         # print(f.tell())
         return pickle.load(f)
 
-def implementSkipPointers(out_postings, file):
+def implementSkipPointers(out_postings, file, termDictionary):
     # with open(file, 'rb') as input:
     #     with open(out_postings, 'wb') as output:
 
     #         for line in 
 
-    with open(file, 'rb') as f:
-        for line in f:
-            print(pickle.load(f))
+    with open(file, 'rb') as ref:
+        with open(out_postings, 'rb') as output:
+
+            for term in termDictionary:
+                pointers = termDictionary[term][1]
+
+                for pointer in pointers:
+                    ref.seek(pointer)
+                    postings = pickle.load(ref)
+
+                    postingsWithSP = insertSkipPointers(postings, len(postings))
 
 
+                    
+
+
+def insertSkipPointers(postings, length):
+    skipInterval = int(math.sqrt(length))
+    index = 0
+
+    result = []
+    for docID in postings:
+        if (index % skipInterval == 0):
+            result.append((docID, index + skipInterval))
+        
+        else:
+            result.append((docID, 0))
+
+    return result
 
 input_directory = output_file_dictionary = output_file_postings = None
 
