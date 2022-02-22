@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from pydoc import doc, plainpager
 import re
+import tempfile
 from turtle import pos
 import nltk
 import sys
@@ -69,7 +70,6 @@ def build_index(in_dir, out_dict, out_postings):
     implementSkipPointers(out_postings, tempFile, result)
     
     # print(retrievePostingsList(tempFile, 54698))
-
     result.save()
 
 
@@ -92,6 +92,7 @@ def retrievePostingsList(file, pointer):
         f.seek(pointer)
         # print(f.tell())
         return pickle.load(f)
+
 
 def implementSkipPointers(out_postings, file, termDictionary):
 
@@ -117,7 +118,6 @@ def implementSkipPointers(out_postings, file, termDictionary):
 
         output.close()
     ref.close()
-
 
 
 def insertSkipPointers(postings, length):
