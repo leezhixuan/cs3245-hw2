@@ -55,6 +55,8 @@ def build_index(in_dir, out_dict, out_postings):
                 pointer = f.tell() # current location in disk
                 result.addTerm(term, len(pL), pointer) # create/update entry in resultant dictionary (i.e dictionary.txt)
                 pickle.dump(sorted(list(pL)), f) # save current postings list onto disk, into temp.txt
+    
+    f.close()
 
     implementSkipPointers(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
@@ -130,12 +132,6 @@ def insertSkipPointers(postings, length):
         currentIndex+=1
 
     return result
-
-# def retrievePostingsList(file, pointer):
-#     with open(file, 'rb') as f:
-#         f.seek(pointer)
-#         # print(f.tell())
-#         return pickle.load(f)
 
 input_directory = output_file_dictionary = output_file_postings = None
 
