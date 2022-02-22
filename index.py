@@ -111,7 +111,7 @@ def implementSkipPointers(out_postings, file, termDictionary):
                     postingsWithSP = insertSkipPointers(postings, len(postings))
 
                     newPointer = output.tell()
-                    pickle.dump(sorted(postings), output)
+                    pickle.dump(postingsWithSP, output)
                     newPointers.append(newPointer)
 
                 termDictionary.updatePointerList(term, newPointers)
@@ -123,13 +123,12 @@ def implementSkipPointers(out_postings, file, termDictionary):
 def insertSkipPointers(postings, length):
     skipInterval = int(math.sqrt(length))
     endOfIndex = length - 1
-    index = 0
+    currentIndex = 0
 
     result = []
-    currentIndex = 0
     for docID in postings:
         node = Node(docID)
-        if (index % skipInterval == 0 and currentIndex + 1 <= endOfIndex):
+        if (currentIndex % skipInterval == 0 and currentIndex + 1 <= endOfIndex):
             node.addSkipPointer(skipInterval)
             result.append(node)
         
