@@ -22,24 +22,20 @@ def build_index(in_dir, out_dict, out_postings):
     then output the dictionary file and postings file
     """
     print('indexing...')
-    # This is an empty method
-    # Pls implement your code in below
 
     tempFile = 'temp.txt'
-    limit = 1024
+    limit = 1024 # max number of terms in each postings list
     result = TermDictionary(out_dict)
 
     tempDict = {}
     # termTracker = {}
     for doc in sorted([int(doc) for doc in os.listdir(in_dir)]):
-        terms = generateTermArray(in_dir, doc)
+        terms = generateTermArray(in_dir, doc) # returns an array of terms present in that particular doc
 
         for term in terms:
+            # each term has an array of sets. Each set contains at most 1024 unique docID
             if term not in tempDict.keys():
-                # tempDict[term] = [[doc]]
-                # termTracker[term] = set()
-                # termTracker[term].add(doc)
-                tempDict[term] = [set([doc])]
+                tempDict[term] = [set([doc])] 
             
             else:
                 # if term not in termTracker[term]:
@@ -48,32 +44,28 @@ def build_index(in_dir, out_dict, out_postings):
                     tempDict[term][currentSetIndex].add(doc)
 
                 else:
+                    # all preceding sets are full, hence the need for a new set.
                     tempDict[term].append(set([doc]))
 
-    # print(tempDict)
-
     # end of processing all docs
-    # format of tempDict = {term : [[doc1, doc2, ..., doc1000], [doc1001, doc1002, ..., doc2000], ...]}
-    # no skipPointers yet.
 
     with open(tempFile, 'wb') as f:
         for term, postingLists in sorted(tempDict.items()):
             for pL in postingLists:
-                pointer = f.tell()
-                # print(pointer)
-                result.addTerm(term, len(pL), pointer)
-                # print(term)
-                # print(sorted(list(pL)))
-                pickle.dump(sorted(list(pL)), f)
+                pointer = f.tell() # current location in disk
+                result.addTerm(term, len(pL), pointer) # create/update entry in resultant dictionary (i.e dictionary.txt)
+                pickle.dump(sorted(list(pL)), f) # save current postings list onto disk, into temp.txt
 
-
-    implementSkipPointers(out_postings, tempFile, result)
+    implementSkipPointers(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
-    # print(retrievePostingsList(tempFile, 54698))
     result.save()
 
 
 def generateTermArray(dir, doc):
+    """
+    Given a document and the directory, we stem all terms present in 
+    the document by stemming them, then output the stemmed terms as an array
+    """
     stemmer = nltk.stem.porter.PorterStemmer()
 
     terms = []
@@ -86,16 +78,11 @@ def generateTermArray(dir, doc):
 
     return terms
 
-
-def retrievePostingsList(file, pointer):
-    with open(file, 'rb') as f:
-        f.seek(pointer)
-        # print(f.tell())
-        return pickle.load(f)
-
-
 def implementSkipPointers(out_postings, file, termDictionary):
-
+    """
+    Add skip pointers to the postings lists present in file, update pointers in termDictionary and
+    save the new postings lists (with skip pointers) into out_postings
+    """
     with open(file, 'rb') as ref:
         with open(out_postings, 'wb') as output:
 
@@ -106,21 +93,24 @@ def implementSkipPointers(out_postings, file, termDictionary):
                 newPointers = []
                 for pointer in pointers:
                     ref.seek(pointer)
-                    postings = pickle.load(ref)
+                    postings = pickle.load(ref) # loads the array of docIDs
 
                     postingsWithSP = insertSkipPointers(postings, len(postings))
 
-                    newPointer = output.tell()
-                    pickle.dump(postingsWithSP, output)
+                    newPointer = output.tell() # new pointer location
+                    pickle.dump(postingsWithSP, output) 
                     newPointers.append(newPointer)
 
-                termDictionary.updatePointerList(term, newPointers)
+                termDictionary.updatePointerList(term, newPointers) 
 
         output.close()
     ref.close()
 
-
 def insertSkipPointers(postings, length):
+    """
+    Given an array of postings, transform each docID into a Node. Add skip pointers
+    at regular skip intervals and output an array of Nodes.
+    """
     skipInterval = int(math.sqrt(length))
     endOfIndex = length - 1
     currentIndex = 0
@@ -128,7 +118,9 @@ def insertSkipPointers(postings, length):
     result = []
     for docID in postings:
         node = Node(docID)
-        if (currentIndex % skipInterval == 0 and currentIndex + 1 <= endOfIndex):
+        if (currentIndex % skipInterval == 0 and currentIndex + skipInterval <= endOfIndex):
+            # makes sure that it is time for a skip pointer to be inserted and it is not inserted into
+            # a node that will facilitate a skip past the last node.
             node.addSkipPointer(skipInterval)
             result.append(node)
         
@@ -138,6 +130,12 @@ def insertSkipPointers(postings, length):
         currentIndex+=1
 
     return result
+
+# def retrievePostingsList(file, pointer):
+#     with open(file, 'rb') as f:
+#         f.seek(pointer)
+#         # print(f.tell())
+#         return pickle.load(f)
 
 input_directory = output_file_dictionary = output_file_postings = None
 
