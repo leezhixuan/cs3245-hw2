@@ -37,13 +37,14 @@ def splitQuery(query):
         else:
             result.append(term)
     
-    for i in range(len(result) - 1):
-        if result[i] == "AND" and result[i+1] == "NOT":
-            result[i] = "ANDNOT"
-            result.pop(i+1)
-        elif result[i] == "OR" and result[i+1] == "NOT":
-            result[i] = "ORNOT"
-            result.pop(i+1)
+    # # removes the need to process NOT, then AND separately.
+    # for i in range(len(result) - 1):
+    #     if result[i] == "AND" and result[i+1] == "NOT":
+    #         result[i] = "ANDNOT"
+    #     elif result[i] == "OR" and result[i+1] == "NOT":
+    #         result[i] = "ORNOT"
+
+    # result = list(filter(lambda term: term != "NOT", result))
     return result
         
     
@@ -73,19 +74,30 @@ def shuntingYard(query):
 
     for operator in operatorStack:
         output.append(operator)
-
+          
     return output
 
 
-
-def evaluateRPN(expression):
+def evaluateRPN(RPNexpression):
     """
     evaluates the input expression (in reverse polish expression) and returns an array of docIDs found
     """
-    pass
+    processStack = [] #enters from the back, exits from the back
 
+    for element in RPNexpression:
+        if not isOperator(element):
+            postingsLists = []
+            
+        
+        else:
+            # element is an operator
+            if element == "NOT":
+                operand = ""
+
+        
 def isOfGreaterPrecedence(operator1, operator2):
-    operatorPrecedence =  {"NOT" : 3, "AND": 2, "OR" : 1}
+    operatorPrecedence = {"NOT": 3, "AND": 2, "OR" : 1}
+    # operatorPrecedence =  {"ANDNOT": 5, "ORNOT": 4, "NOT": 3, "AND": 2, "OR" : 1}
     # {"(": 4, ")" : 4, "NOT" : 3, "AND": 2, "OR" : 1}
     return operatorPrecedence[operator1] > operatorPrecedence[operator2]
 
@@ -97,7 +109,11 @@ def retrievePostingsList(file, pointer):
     with open(file, 'rb') as f:
         f.seek(pointer)
         # print(f.tell())
-        return pickle.load(f)
+        # reurn pickle.load(f)
+        postingsList = pickle.load(f)
+    f.close()
+
+    return postingsList
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
