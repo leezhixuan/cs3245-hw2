@@ -37,6 +37,13 @@ def splitQuery(query):
         else:
             result.append(term)
     
+    for i in range(len(result) - 1):
+        if result[i] == "AND" and result[i+1] == "NOT":
+            result[i] = "ANDNOT"
+            result.pop(i+1)
+        elif result[i] == "OR" and result[i+1] == "NOT":
+            result[i] = "ORNOT"
+            result.pop(i+1)
     return result
         
     
