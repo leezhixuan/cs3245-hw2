@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from ast import operator
 import re
 import nltk
 import sys
@@ -40,19 +41,45 @@ def splitQuery(query):
         
     
 def shuntingYard(query):
-    operatorStack = []
+    operatorStack = [] #enters from the back, exits from the back
     output = []
 
     queryTerms = splitQuery(query)
+    for term in queryTerms:
 
+        if term == '(':
+            operatorStack.append(term)
+
+        elif term == ')':
+            while (len(operatorStack) > 0 and operatorStack[len(operatorStack) - 1] != "("):
+                output.append(operatorStack.pop())
+
+            operatorStack.pop() # discards "("
+        elif isOperator(term):
+            while (len(operatorStack) > 0 and operatorStack[len(operatorStack) - 1] != "(" and isOfGreaterPrecedence(operatorStack[len(operatorStack) - 1], term)):
+                output.append(operatorStack.pop())
+
+            operatorStack.append(term)
+
+        else:
+            output.append(term)
+
+    for operator in operatorStack:
+        output.append(operator)
+
+    return output
 
 
 
 def evaluateRPN(expression):
+    """
+    evaluates the input expression (in reverse polish expression) and returns an array of docIDs found
+    """
     pass
 
 def isOfGreaterPrecedence(operator1, operator2):
-    operatorPrecedence = {"(": 4, ")" : 4, "NOT" : 3, "AND": 2, "OR" : 1}
+    operatorPrecedence =  {"NOT" : 3, "AND": 2, "OR" : 1}
+    # {"(": 4, ")" : 4, "NOT" : 3, "AND": 2, "OR" : 1}
     return operatorPrecedence[operator1] > operatorPrecedence[operator2]
 
 def isOperator(term):
