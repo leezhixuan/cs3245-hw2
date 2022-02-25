@@ -20,7 +20,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print('running search on the queries...')
     # This is an empty method
     # Pls implement your code in below
-
+    # aa
     termDict = TermDictionary(dict_file)
     termDict.load()
 
