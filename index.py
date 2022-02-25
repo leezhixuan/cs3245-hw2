@@ -113,7 +113,7 @@ def insertSkipPointers(postings, length):
     Given an array of postings, transform each docID into a Node. Add skip pointers
     at regular skip intervals and output an array of Nodes.
     """
-    skipInterval = int(math.sqrt(length)) - 1
+    skipInterval = int(math.sqrt(length))
     endOfIndex = length - 1
     currentIndex = 0
 
