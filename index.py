@@ -27,9 +27,10 @@ def build_index(in_dir, out_dict, out_postings):
     limit = 1024 # max number of terms in each postings list
     result = TermDictionary(out_dict)
 
+    sortedDocIDs = sorted([int(doc) for doc in os.listdir(in_dir)])
     tempDict = {}
     # termTracker = {}
-    for doc in sorted([int(doc) for doc in os.listdir(in_dir)]):
+    for doc in sortedDocIDs:
         terms = generateTermArray(in_dir, doc) # returns an array of terms present in that particular doc
 
         for term in terms:
@@ -60,6 +61,7 @@ def build_index(in_dir, out_dict, out_postings):
 
     implementSkipPointers(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
+    result.addCorpusDocIDs(sortedDocIDs)
     result.save()
 
 

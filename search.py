@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 from ast import operator
 import re
+from turtle import pos
+from webbrowser import Opera
 import nltk
 import sys
 import getopt
@@ -20,7 +22,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print('running search on the queries...')
     # This is an empty method
     # Pls implement your code in below
-    # aa
+
     termDict = TermDictionary(dict_file)
     termDict.load()
 
@@ -80,7 +82,7 @@ def shuntingYard(query):
             operatorStack.append(term)
         else:
             output.append(term)
-    for operator in operatorStack:
+    while(len(operatorStack) > 0):
         output.append(operatorStack.pop())
     return output
 
@@ -92,17 +94,25 @@ def evaluateRPN(RPNexpression, dict_file, postings_file):
     """
     processStack = [] #enters from the back, exits from the back
 
-    for element in RPNexpression:
-        if not isOperator(element):
-            # postingsLists = []
-            processStack.append(element)
-            
-        else:
-            # element is an operator
-            if element == "NOT": #create a new class QueryTerm that stores isComplemented
-                firstOperand = processStack.pop() # term to be complemented
-                pass
+    for qTerm in RPNexpression:
+        if isOperator(qTerm):
+            if qTerm == "NOT": # unary operator
+                operand1 = processStack.pop()
+                processStack.append(evalNOT(operand1, dict_file, postings_file))
+            elif qTerm == "AND": # binary operator
+                operand1 = processStack.pop()
+                operand2 = processStack.pop()
+                processStack.append(evalAND(operand1, operand2, dict_file, postings_file))
+            else: # qTerm is "OR", a binary operator
+                operand1 = processStack.pop()
+                operand2 = processStack.pop()
+                processStack.append(evalOR(operand1, operand2, dict_file, postings_file))
+        else: # qTerm is not an operator
+            operand = Operand(qTerm)
+            processStack.append(operand)
 
+    # at the end, the processStack will contain arrays of docIDs
+    
         
 def isOfGreaterPrecedence(operator1, operator2):
     operatorPrecedence = {"NOT": 3, "AND": 2, "OR" : 1}
@@ -135,27 +145,38 @@ def retrievePostingsList(file, pointer):
 
     return postingsList
 
-def AND(queryTerm1, queryTerm2):
+def evalAND(operand1, operand2, dictFile, postingsFile):
     pass
 
-def OR(queryTerm1, queryTerm2):
-    'c', 'NOT', 'd', 'NOT', 'OR'
-    if queryTerm1.isComplemented():
-        #produce an array of docIDs that doesnt contain term1
-        pass
-
-    if queryTerm2.isComplemented():
-        pass
-
-def NOT(queryTerm):
+def evalOR(operand1, operand2, dictFile, postingsFile):
     pass
 
+def evalNOT(operand, dictFile, postingsFile):
+    """
+    input: TermDictionary as dictFile
+    input: name of posting file as postingsFle
+    output: Operand containing result
+    """
+    allDocIDs = dictFile.getCorpusDocIDs()
+    result = []
+    if operand.isTerm():
+        pointerList = dictFile.getTermPointers()
+        termDocIDs = []
+        for pointer in pointerList:
+            partialDocIDs = retrievePostingsList(postings_file, pointer)
+            termDocIDs.extend(partialDocIDs)
+        
+        # here, we will have all the docIDs of a term in termDocIDs
+        setOfTermDocIDs = set(termDocIDs)
+        
+    else: # Operand is result; a list of docIDs
+        setOfTermDocIDs = set(termDocIDs)
+        
+    for ID in allDocIDs:
+            if ID not in setOfTermDocIDs:
+                result.append(ID)
 
-def mergeAND(postingList1, postingList2):
-    pass
-
-def mergeOR(postingList1, postingList2):
-    pass
+    return Operand(term=None, result=result)
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 

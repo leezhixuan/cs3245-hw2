@@ -36,4 +36,10 @@ class TermDictionary(object):
 
     def getTermDocFrequency(self, term):
         return self.termInformation[term][self.DOCFREQ_INDEX]
+
+    def addCorpusDocIDs(self, allDocIDs):
+        self.termInformation["c0rpu5D1r3ct0ry"] = allDocIDs
+
+    def getCorpusDocIDs(self):
+        return self.termInformation["c0rpu5D1r3ct0ry"]
     
