@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 from ast import operator
 import re
-from turtle import pos
-from webbrowser import Opera
 import nltk
 import sys
 import getopt
