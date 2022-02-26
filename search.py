@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from urllib.request import ProxyDigestAuthHandler
 import nltk
 import sys
 import getopt
@@ -281,6 +282,14 @@ def evalOR_terms(term1, term2, dictFile, postingsFile):
     result = set()
     pointer1 = dictFile.getTermPointers(term1)
     pointer2 = dictFile.getTermPointers(term2)
+    if (len(pointer1) == 0 and len(pointer2) > 0): # term1 does not exist in the corpus
+        return sorted(set(pointer2))
+    elif (len(pointer2) == 0 and len(pointer1) > 0): # term2 does not exist in the corpus
+        return sorted(set(pointer1))
+    elif (len(pointer1) == 0 and len(pointer2) == 0): # both term1 and term2 do not exist in the corpus
+        return sorted(result)
+    
+    # else, pointer1 and pointer2 are not empty lists
     termsParsed, i = 0, 0
     while True:
         if termsParsed <= dictFile.getTermDocFrequency(term1) or termsParsed <= dictFile.getTermDocFrequency(term2):
@@ -314,6 +323,9 @@ def evalOR_terms(term1, term2, dictFile, postingsFile):
 def evalOR_term_result(term, res, dictFile, postingsFile):
     result = set(res)
     pointer = dictFile.getTermPointers(term)
+    if (len(pointer) == 0): # term does not exist in the corpus
+        return sorted(result)
+
     if dictFile.getTermDocFrequency(term) <= 1024:
         nodes = retrievePostingsList(postingsFile, pointer[0])
         pl = [node.getDocID() for node in nodes]
@@ -336,6 +348,9 @@ def evalAND_terms(term1, term2, dictFile, postingsFile):
     result = set()
     pointer1 = dictFile.getTermPointers(term1)
     pointer2 = dictFile.getTermPointers(term2)
+    if (len(pointer1) == 0 or len(pointer2) == 0): # either term1 or term2, or both do not exist in the corpus.
+        return sorted(result)
+
     termsParsed, i = 0, 0
     while True:
         if termsParsed <= dictFile.getTermDocFrequency(term1) or termsParsed <= dictFile.getTermDocFrequency(term2):
@@ -371,6 +386,10 @@ def evalAND_terms(term1, term2, dictFile, postingsFile):
 def evalAND_term_result(term, res, dictFile, postingsFile):
     set1 = set(res)
     pointer = dictFile.getTermPointers(term)
+
+    if (len(pointer) == 0): # if term does not exist in the corpus
+        return sorted(set())
+
     if dictFile.getTermDocFrequency(term) <= 1024:
         nodes = retrievePostingsList(postingsFile, pointer[0])
         pl = [node.getDocID() for node in nodes]

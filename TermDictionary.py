@@ -45,7 +45,7 @@ class TermDictionary(object):
             docFrequency = self.termInformation[term][self.DOCFREQ_INDEX]
             return docFrequency
         except KeyError:
-            return -1
+            return 0
 
     def addCorpusDocIDs(self, allDocIDs):
         self.termInformation["c0rpu5D1r3ct0ry"] = allDocIDs
