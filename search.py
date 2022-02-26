@@ -202,7 +202,7 @@ def evalAND(operand1, operand2, dictFile, postingsFile):
         result2 = operand2.getResult()
         result = evalAND_results(result1, result2)
 
-    return Operand(None, result)
+    return Operand(term=None, result=result)
 
 
 def evalOR(operand1, operand2, dictFile, postingsFile):
@@ -234,7 +234,7 @@ def evalOR(operand1, operand2, dictFile, postingsFile):
         result2 = operand2.getResult()
         result = evalOR_results(result1, result2)
 
-    return Operand(None, result)
+    return Operand(term=None, result=result)
 
 
 def evalNOT(operand, dictFile, postingsFile):

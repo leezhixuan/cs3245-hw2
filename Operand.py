@@ -1,9 +1,11 @@
 from cgitb import reset
 
+from numpy import isin
+
 
 class Operand(object):
 
-    def __init__(self, term=None, result=[]):
+    def __init__(self, term=None, result=None):
         self.term = term
         self.isComplemented = False
         self.result = result
@@ -21,10 +23,10 @@ class Operand(object):
         return str(self.term)
 
     def isTerm(self):
-        return len(self.result) == 0
+        return isinstance(self.term, type(None))
 
     def isResult(self):
-        return len(self.result) > 0
+        return isinstance(self.result, type(None))
     
     def getResult(self):
         return self.result

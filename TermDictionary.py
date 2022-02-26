@@ -18,7 +18,11 @@ class TermDictionary(object):
             self.termInformation[term] = [docFrequency, [pointer]]
     
     def getTermPointers(self, term):
-        return self.termInformation[term][self.POINTERS_INDEX]
+        try:
+            termPointers = self.termInformation[term][self.POINTERS_INDEX]
+            return termPointers
+        except KeyError:
+            return []
     
     def save(self):
         with open(self.storageLocation, 'wb') as f:
@@ -37,7 +41,11 @@ class TermDictionary(object):
         return self.termInformation
 
     def getTermDocFrequency(self, term):
-        return self.termInformation[term][self.DOCFREQ_INDEX]
+        try:
+            docFrequency = self.termInformation[term][self.DOCFREQ_INDEX]
+            return docFrequency
+        except KeyError:
+            return -1
 
     def addCorpusDocIDs(self, allDocIDs):
         self.termInformation["c0rpu5D1r3ct0ry"] = allDocIDs
