@@ -23,10 +23,10 @@ class Operand(object):
         return str(self.term)
 
     def isTerm(self):
-        return isinstance(self.term, type(None))
+        return not isinstance(self.term, type(None))
 
     def isResult(self):
-        return isinstance(self.result, type(None))
+        return not isinstance(self.result, type(None))
     
     def getResult(self):
         return self.result
