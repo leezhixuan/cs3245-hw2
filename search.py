@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-from urllib.request import ProxyDigestAuthHandler
 import nltk
 import sys
 import getopt
@@ -264,6 +263,9 @@ def evalTerm(term, dictFile, postingsFile):
 
 
 def evalOR_terms(term1, term2, dictFile, postingsFile):
+    """
+    Computes and returns the union of the postings lists of the 2 terms provided.
+    """
     result = set()
     pointer1 = dictFile.getTermPointers(term1)
     pointer2 = dictFile.getTermPointers(term2)
@@ -309,6 +311,10 @@ def evalOR_terms(term1, term2, dictFile, postingsFile):
 
 
 def evalOR_term_result(term, res, dictFile, postingsFile):
+    """
+    Computes and returns the union of the postings list of the term and 
+    result list provided.
+    """
     result = set(res)
     pointer = dictFile.getTermPointers(term)
     if len(pointer) == 0:  # term does not exist in the corpus
@@ -330,12 +336,18 @@ def evalOR_term_result(term, res, dictFile, postingsFile):
 
 
 def evalOR_results(result1, result2):
+    """
+    Computes and returns the union of the 2 result list provided.
+    """
     result = set(result1)
     result.update(set(result2))  # Union both sets
     return sorted(result)
 
 
 def evalAND_terms(term1, term2, dictFile, postingsFile):
+    """
+    Computes and returns the intersection of the postings lists of the 2 terms provided.
+    """
     result = set()
     pointer1 = dictFile.getTermPointers(term1)
     pointer2 = dictFile.getTermPointers(term2)
@@ -381,6 +393,10 @@ def evalAND_terms(term1, term2, dictFile, postingsFile):
 
 
 def evalAND_term_result(term, res, dictFile, postingsFile):
+    """
+    Computes and returns the intersection of the postings list of the term and 
+    result list provided.
+    """
     set1 = set(res)
     pointer = dictFile.getTermPointers(term)
 
@@ -403,6 +419,9 @@ def evalAND_term_result(term, res, dictFile, postingsFile):
 
 
 def evalAND_results(result1, result2):
+    """
+    Computes and returns the intersection of the 2 result list that are provided.
+    """
     return sorted(set.intersection(set(result1), set(result2)))
 
 
