@@ -1,38 +1,36 @@
-from cgitb import reset
-
-from numpy import isin
-
-
 class Operand(object):
+    """
+    Operand is a class that encapsulates the attributes and behaviour of an operand in logical expressions.
+    It serves to simplify the evaluation of logical expressions.
+    """
 
     def __init__(self, term=None, result=None):
         self.term = term
-        self.isComplemented = False
         self.result = result
 
-    def getTerm(self):
-        return self.term
-
-    def complement(self):
-        self.isComplemented = True
-
-    def isComplemented(self):
-        return self.isComplemented
 
     def __repr__(self):
         return str(self.term)
 
+
     def isTerm(self):
+        """
+        Checks if Operand is a term and not a result
+        """
         return not isinstance(self.term, type(None))
 
+
     def isResult(self):
+        """
+        Checks if Operand is a result and not a term 
+        """
         return not isinstance(self.result, type(None))
     
+
     def getResult(self):
         return self.result
-    
-
 
     
-
+    def getTerm(self):
+        return self.term
     

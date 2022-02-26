@@ -1,8 +1,4 @@
 #!/usr/bin/python3
-from pydoc import doc, plainpager
-import re
-import tempfile
-from turtle import pos
 import nltk
 import sys
 import getopt
@@ -15,6 +11,7 @@ from Node import Node
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
+
 
 def build_index(in_dir, out_dict, out_postings):
     """
@@ -61,7 +58,7 @@ def build_index(in_dir, out_dict, out_postings):
 
     implementSkipPointers(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
-    result.addCorpusDocIDs(sortedDocIDs)
+    result.addCorpusDocIDs(sortedDocIDs) #add all docIDs in the corpus to the dictionary
     result.save()
     os.remove(tempFile)
 
@@ -79,9 +76,10 @@ def generateTermArray(dir, doc):
         for sentence in sentences:
             words = nltk.tokenize.word_tokenize(sentence)
             for word in words:
-                terms.append(stemmer.stem(word.lower()))
+                terms.append(stemmer.stem(word.lower())) # stemming + case-folding
 
     return terms
+
 
 def implementSkipPointers(out_postings, file, termDictionary):
     """
@@ -110,6 +108,7 @@ def implementSkipPointers(out_postings, file, termDictionary):
 
         output.close()
     ref.close()
+
 
 def insertSkipPointers(postings, length):
     """

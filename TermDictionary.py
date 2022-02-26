@@ -1,6 +1,9 @@
 import pickle
 
 class TermDictionary(object):
+    """
+    TermDictionary is a class that encapsulates the attributes and behaviour of a dictionary in indexes.
+    """
 
     DOCFREQ_INDEX = 0
     POINTERS_INDEX = 1
@@ -9,46 +12,73 @@ class TermDictionary(object):
         self.termInformation = {} # In the form of {term: [docFrequency, [pointer1, pointer2, pointer3, ...]]}
         self.storageLocation = storageLocation
 
+
     def addTerm(self, term, docFrequency, pointer):
-        if term in self.termInformation.keys():
+        """
+        Given a term, its document frequency and a pointer to where its (partial) postings list is stored,
+        adds these information into the dictionary.
+        """
+        if term in self.termInformation.keys(): # if given term already exists
             self.termInformation[term][self.DOCFREQ_INDEX] += docFrequency
-            self.termInformation[term][self.POINTERS_INDEX].append(pointer)
+            self.termInformation[term][self.POINTERS_INDEX].append(pointer) # append new pointer to its existing list of pointers
         
-        else:
-            self.termInformation[term] = [docFrequency, [pointer]]
+        else: # term does not exist
+            self.termInformation[term] = [docFrequency, [pointer]] # creates a new key-value pair in the dictionary.
     
+
     def getTermPointers(self, term):
-        try:
+        try: 
+            # if given term exists in the dictionary
             termPointers = self.termInformation[term][self.POINTERS_INDEX]
             return termPointers
-        except KeyError:
+        except KeyError: # given term does not exist in the dictionary
             return []
     
+
     def save(self):
+        """
+        Saves term information held in the storage location specified
+        """
         with open(self.storageLocation, 'wb') as f:
             pickle.dump(self.termInformation, f)
         f.close()
 
+
     def load(self):
+        """
+        Loads term information held at the specified storage location
+        """
         with open(self.storageLocation, 'rb') as f:
             self.termInformation = pickle.load(f)
         f.close()
 
+
     def updatePointerList(self, term, newPointerList):
+        """
+        Given term, updates its existing pointer list with the new pointer list provided.
+        """
         self.termInformation[term][self.POINTERS_INDEX] = newPointerList
+
 
     def getTermDict(self):
         return self.termInformation
 
+
     def getTermDocFrequency(self, term):
-        try:
+        try: 
+            # if term exists in the dictionary
             docFrequency = self.termInformation[term][self.DOCFREQ_INDEX]
             return docFrequency
-        except KeyError:
+        except KeyError: # term does not exist in the dictionary
             return 0
 
+
     def addCorpusDocIDs(self, allDocIDs):
+        """
+        Adds a list of all docIDs into the dictionary to facilitate NOT operations
+        """
         self.termInformation["c0rpu5D1r3ct0ry"] = allDocIDs
+
 
     def getCorpusDocIDs(self):
         return self.termInformation["c0rpu5D1r3ct0ry"]

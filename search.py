@@ -24,65 +24,50 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     # Pls implement your code in below
 
     termDict = TermDictionary(dict_file)
-    termDict.load()
+    termDict.load() # load term information into termDict from dict_file
 
     with open(queries_file, 'r') as queryFile:
         with open(results_file, 'w') as resultFile:
             allResult = []
+
             for query in queryFile:
-                if query.strip():
+                if query.strip(): # if query is not blank
                     RPNExpression = shuntingYard(query)
                     result = evaluateRPN(RPNExpression, termDict, postings_file)
                     allResult.append(result)
                 else:
                     allResult.append("")
 
-            outputResult = "\n".join(allResult)
+            outputResult = "\n".join(allResult) # to output all result onto a new line.
             resultFile.write(outputResult)
+
         resultFile.close()
     queryFile.close()
 
 
 def splitQuery(query):
-    ['NOT', '(', 'a', 'OR', 'b', ')', 'AND', '(', 'NOT', 'c', 'OR', 'NOT', 'd', ')', 'AND', '(', 'e', 'OR', 'f', ')' ]
-    ['a', 'b', 'OR', 'NOT', 'c', 'NOT', 'd', 'NOT', 'OR', 'e', 'f', 'OR', 'AND', 'AND']
     """
     Takes in a query string and splits it into an array of query terms and operators,
     without spaces
     """
-    # possible idea: convert query terms into QueryTerm objects here. Eliminate the presence of NOT operators in the resultant output by
-    # representing it in the isComplemented attribute of the QueryTerm. This removes the need for a NOT method as well.
     temp = nltk.tokenize.word_tokenize(query)
-    stemmer = nltk.stem.porter.PorterStemmer()
+    stemmer = nltk.stem.porter.PorterStemmer() #stem query like how we stem terms in corpus
     result = []
+
     for term in temp:
-        if not isOperator(term):
+        if not isOperator(term): # don't case-fold operators
             result.append(stemmer.stem(term.lower()))
-        else:
+        else: #term is an Operator
             result.append(term)
-    # # scraped because it doesnt account for the first term having NOT
-    # # # removes the need to process NOT, then AND separately.
-    # # for i in range(len(result) - 1):
-    # #     if result[i] == "AND" and result[i+1] == "NOT":
-    # #         result[i] = "ANDNOT"
-    # #     elif result[i] == "OR" and result[i+1] == "NOT":
-    # #         result[i] = "ORNOT"
-    # output = []
-    # for i in range(len(result) - 1):
-    #     if result[i] == "NOT" and not isOperator(result[i+1]): # complemented term
-    #         qTerm = QueryTerm(result[i])
-    #         qTerm.complement()
-    #         output.append(qTerm)
-    #     elif isOperator(result[i]):
-    #         output.append(result[i])
-    #     else: #normal term
-    #         qTerm = QueryTerm(result[i])
-    #         output.append(qTerm)     
-    # output = list(filter(lambda qTerm: qTerm != "NOT", output))
+
     return result
         
     
 def shuntingYard(query):
+    """
+    This is the Shunting-yard algorithm. It parses a query string and returns them
+    in Reverse Polish Notation.
+    """
     operatorStack = [] #enters from the back, exits from the back
     output = []
     queryTerms = splitQuery(query)
@@ -99,13 +84,14 @@ def shuntingYard(query):
             operatorStack.append(term)
         else:
             output.append(term)
-    while(len(operatorStack) > 0):
+
+    while(len(operatorStack) > 0): 
         output.append(operatorStack.pop())
+
     return output
 
 
 def evaluateRPN(RPNexpression, dict_file, postings_file):
-    "[X, 'c', 'd', ...]"
     """
     evaluates the input expression (in reverse polish expression) and returns an array of docIDs found
     """
@@ -133,41 +119,37 @@ def evaluateRPN(RPNexpression, dict_file, postings_file):
     # result already (in the case where the query is a combination e.g. "hi AND bye"), 
     # or simply just a term (in the case where the query is only 1 word e.g. "hello")
 
-    termOrResult = processStack[0]
+    termOrResult = processStack[0] # covers the case where the query is a single term (e.g. "hi")
     if termOrResult.isTerm():
         processStack.append(evalTerm(processStack.pop(), dict_file, postings_file))
 
     return " ".join([str(docID) for docID in processStack.pop().getResult()])
 
-        
+
 def isOfGreaterPrecedence(operator1, operator2):
+    """
+    Given 2 operators, operator1 and operator2, determine if operator1 is
+    of greater precedence than operator2.
+    """
     operatorPrecedence = {"NOT": 3, "AND": 2, "OR" : 1}
-    # operatorPrecedence =  {"ANDNOT": 5, "ORNOT": 4, "NOT": 3, "AND": 2, "OR" : 1}
-    # {"(": 4, ")" : 4, "NOT" : 3, "AND": 2, "OR" : 1}
     return operatorPrecedence[operator1] > operatorPrecedence[operator2]
 
 
 def isOperator(term):
+    """
+    Checks if the given term is an operator.
+    """
     operators = ["(", ")", "NOT", "AND", "OR"]
     return term in operators
 
-# def retrievePostingsLists(termDict, postings_file, term):
-#     pointers = termDict.getTermPointers()
-#     postingsLists = 
-#     with open(postings_file, 'rb') as f:
-#         for
-#         f.seek(pointer)
-#         # print(f.tell())
-#         # reurn pickle.load(f)
-#         postingsList = pickle.load(f)
-#     f.close()
-
 
 def retrievePostingsList(file, pointer):
+    """
+    Given a pointer to determine the location in disk, 
+    retrieves the postings list from that location.
+    """
     with open(file, 'rb') as f:
         f.seek(pointer)
-        # print(f.tell())
-        # reurn pickle.load(f)
         postingsList = pickle.load(f)
     f.close()
 
@@ -264,11 +246,14 @@ def evalNOT(operand, dictFile, postingsFile):
     for ID in allDocIDs:
         if ID not in setOfTermDocIDs:
             result.append(ID)
-    # print("result: ", result)
+
     return Operand(term=None, result=result)
 
 
 def evalTerm(term, dictFile, postingsFile):
+    """
+    Given a term, returns a list of docIDs that contains the term.
+    """
     result = []
     pointerList = dictFile.getTermPointers(term.getTerm())
     for pointer in pointerList:
