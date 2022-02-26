@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-from ast import operator
-import re
 import nltk
 import sys
 import getopt
@@ -23,6 +21,23 @@ def run_search(dict_file, postings_file, queries_file, results_file):
 
     termDict = TermDictionary(dict_file)
     termDict.load()
+
+    with open(queries_file, 'r') as queryFile:
+        with open(results_file, 'w') as resultFile:
+            allResult = []
+            for query in queryFile:
+                if query.strip():
+                    RPNExpression = shuntingYard(query)
+                    result = evaluateRPN(RPNExpression, termDict, postings_file)
+                    allResult.append(result)
+                else:
+                    allResult.append("")
+
+            outputResult = "\n".join(allResult)
+            resultFile.write(outputResult)
+        resultFile.close()
+    queryFile.close()
+
 
 def splitQuery(query):
     ['NOT', '(', 'a', 'OR', 'b', ')', 'AND', '(', 'NOT', 'c', 'OR', 'NOT', 'd', ')', 'AND', '(', 'e', 'OR', 'f', ')' ]
@@ -108,8 +123,18 @@ def evaluateRPN(RPNexpression, dict_file, postings_file):
         else: # qTerm is not an operator
             operand = Operand(qTerm)
             processStack.append(operand)
+    
 
-    # at the end, the processStack will contain arrays of docIDs
+    # at the end, the processStack will contain just 1 Operand, which could be an array of 
+    # result already (in the case where the query is a combination e.g. "hi AND bye"), 
+    # or simply just a term (in the case where the query is only 1 word e.g. "hello")
+
+    termOrResult = processStack[0]
+    if termOrResult.isTerm():
+        processStack.append(evalTerm(processStack.pop(), dict_file, postings_file))
+
+    return " ".join([str(docID) for docID in processStack.pop().getResult()])
+
     
         
 def isOfGreaterPrecedence(operator1, operator2):
@@ -158,11 +183,13 @@ def evalNOT(operand, dictFile, postingsFile):
     allDocIDs = dictFile.getCorpusDocIDs()
     result = []
     if operand.isTerm():
-        pointerList = dictFile.getTermPointers()
+        # print(operand.getTerm())
+        pointerList = dictFile.getTermPointers(operand.getTerm())
         termDocIDs = []
         for pointer in pointerList:
-            partialDocIDs = retrievePostingsList(postings_file, pointer)
-            termDocIDs.extend(partialDocIDs)
+            # print(termDocIDs)
+            partialDocIDNodes = retrievePostingsList(postings_file, pointer)
+            termDocIDs.extend([node.getDocID() for node in partialDocIDNodes])
         
         # here, we will have all the docIDs of a term in termDocIDs
         setOfTermDocIDs = set(termDocIDs)
@@ -171,8 +198,17 @@ def evalNOT(operand, dictFile, postingsFile):
         setOfTermDocIDs = set(termDocIDs)
         
     for ID in allDocIDs:
-            if ID not in setOfTermDocIDs:
-                result.append(ID)
+        if ID not in setOfTermDocIDs:
+            result.append(ID)
+    # print("result: ", result)
+    return Operand(term=None, result=result)
+
+def evalTerm(term, dictFile, postingsFile):
+    result = []
+    pointerList = dictFile.getTermPointers(term.getTerm())
+    for pointer in pointerList:
+        partialDocIDs = retrievePostingsList(postingsFile, pointer)
+        result.extend(partialDocIDs)
 
     return Operand(term=None, result=result)
 

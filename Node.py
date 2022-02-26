@@ -14,7 +14,8 @@ class Node(object):
         return self.skipPointer != 0
         
     def __str__(self):
-        return "(" + str(self.docID) + ", " + str(self.skipPointer) + ")"
+        # return "(" + str(self.docID) + ", " + str(self.skipPointer) + ")"
+        return str(self.docID)
 
     def __repr__(self):
         return "(" + str(self.docID) + ", " + str(self.skipPointer) + ")"
