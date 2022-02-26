@@ -63,6 +63,7 @@ def build_index(in_dir, out_dict, out_postings):
     
     result.addCorpusDocIDs(sortedDocIDs)
     result.save()
+    os.remove(tempFile)
 
 
 def generateTermArray(dir, doc):
