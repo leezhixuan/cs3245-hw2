@@ -26,7 +26,6 @@ def build_index(in_dir, out_dict, out_postings):
 
     sortedDocIDs = sorted([int(doc) for doc in os.listdir(in_dir)])
     tempDict = {}
-    # termTracker = {}
     for doc in sortedDocIDs:
         terms = generateTermArray(in_dir, doc) # returns an array of terms present in that particular doc
 
@@ -46,7 +45,6 @@ def build_index(in_dir, out_dict, out_postings):
                     tempDict[term].append(set([doc]))
 
     # end of processing all docs
-
     with open(tempFile, 'wb') as f:
         for term, postingLists in sorted(tempDict.items()):
             for pL in postingLists:

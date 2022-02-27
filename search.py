@@ -28,12 +28,12 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             allResult = []
 
             for query in queryFile:
-                if query.strip(): # if query is not blank
+                if query.strip(): # if query is not blank after removing spaces from both ends
                     RPNExpression = shuntingYard(query)
                     result = evaluateRPN(RPNExpression, termDict, postings_file)
                     allResult.append(result)
                 else:
-                    allResult.append("")
+                    allResult.append("") # blank queries
 
             outputResult = "\n".join(allResult) # to output all result onto a new line.
             resultFile.write(outputResult)
