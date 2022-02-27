@@ -4,7 +4,7 @@ Email(s): e0564887@u.nus.edu; e0406365@u.nus.edu
 
 == Python Version ==
 
-We're using Python Version <3.7.6 or replace version number> for
+We're using Python Version 3.8.3 for
 this assignment.
 
 
