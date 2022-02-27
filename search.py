@@ -48,18 +48,18 @@ def splitQuery(query):
     without spaces
     """
     temp = nltk.tokenize.word_tokenize(query)
-    stemmer = nltk.stem.porter.PorterStemmer() #stem query like how we stem terms in corpus
+    stemmer = nltk.stem.porter.PorterStemmer() # stem query like how we stem terms in corpus
     result = []
 
     for term in temp:
         if not isOperator(term): # don't case-fold operators
             result.append(stemmer.stem(term.lower()))
-        else: #term is an Operator
+        else: # term is an Operator
             result.append(term)
 
     return result
-        
-    
+
+
 def shuntingYard(query):
     """
     This is the Shunting-yard algorithm. It parses a query string and returns them
@@ -136,7 +136,7 @@ def isOperator(term):
     """
     Checks if the given term is an operator.
     """
-    operators = ["(", ")", "NOT", "AND", "OR"]
+    operators = ["NOT", "AND", "OR"]
     return term in operators
 
 
