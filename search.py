@@ -278,7 +278,8 @@ def evalOR_terms(term1, term2, dictFile, postingsFile):
         return sorted(result)
     
     # else, pointer1 and pointer2 are not empty lists
-    termsParsed, i = 0, 0
+    termsParsed, i = 0, 0  # termsParsed allows us to check through all chunks, i to obtain the corresponding postings
+
     while True:
         # Parse postings chunk by chunk, where each chunk is 1024 entries
         if termsParsed <= dictFile.getTermDocFrequency(term1) or termsParsed <= dictFile.getTermDocFrequency(term2):
@@ -355,7 +356,9 @@ def evalAND_terms(term1, term2, dictFile, postingsFile):
     if len(pointer1) == 0 or len(pointer2) == 0:  # either term1 or term2, or both do not exist in the corpus.
         return sorted(result)
 
-    termsParsed, i = 0, 0
+    # else, pointer1 and pointer2 are not empty lists
+    termsParsed, i = 0, 0  # termsParsed allows us to check through all chunks, i to obtain the corresponding postings
+
     while True:
         # Parse postings chunk by chunk, where each chunk is 1024 entries
         if termsParsed <= dictFile.getTermDocFrequency(term1) or termsParsed <= dictFile.getTermDocFrequency(term2):
@@ -397,24 +400,39 @@ def evalAND_term_result(term, res, dictFile, postingsFile):
     Computes and returns the intersection of the postings list of the term and 
     result list provided.
     """
-    set1 = set(res)
+    result = set()
     pointer = dictFile.getTermPointers(term)
+    termsParsed, i = 0, 0  # termsParsed allows us to check through all chunks, i to obtain the corresponding postings
 
-    if (len(pointer) == 0): # if term does not exist in the corpus
+    if len(pointer) == 0:  # if term does not exist in the corpus
         return sorted(set())
 
-    # Retrieve postings lists
-    if dictFile.getTermDocFrequency(term) <= 1024:
-        nodes = retrievePostingsList(postingsFile, pointer[0])
-        pl = [node.getDocID() for node in nodes]
-    else:
-        pl = []
-        for p in pointer:
-            nodes = retrievePostingsList(postingsFile, p)
-            pl.extend([node.getDocID() for node in nodes])
+    # else, pointer1 and pointer2 are not empty lists
 
-    # Intersect
-    result = set.intersection(set1, set(pl))
+    while True:
+        # Parse postings chunk by chunk, where each chunk is 1024 entries
+        if termsParsed <= dictFile.getTermDocFrequency(term):
+            pl = retrievePostingsList(postingsFile, pointer[i])
+        else:
+            break
+
+        while pl != [] and res != []:
+            if Node.getDocID(pl[0]) == res[0]:  # Intersection, add to results
+                result.add(res[0])
+                pl, res = pl[1:], res[1:]
+            else:
+                # Advance list with smaller docID
+                if Node.getDocID(pl[0]) < res[0]:
+                    # Check if skip pointers exist, and use if feasible
+                    if Node.hasSkip(pl[0]) and Node.getDocID(pl[pl[0].skipPointer]) < res[0]:
+                        pl = pl[pl[0].skipPointer:]
+                    else:
+                        pl = pl[1:]
+                else:
+                    res = res[1:]
+        termsParsed += 1024
+        i += 1
+
     return sorted(result)
 
 
