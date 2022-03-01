@@ -249,7 +249,8 @@ def evalNOT(operand, dictFile, postingsFile):
     input: name of posting file as postingsFle
     output: Operand containing result
     """
-    allDocIDs = dictFile.getCorpusDocIDs()
+    pointerToAllDocIDs = dictFile.getPointerToCorpusDocIDs()
+    allDocIDs = [Node.getDocID(n) for n in retrievePostingsList(postingsFile, pointerToAllDocIDs)]
     result = []
     if operand.isTerm():
         # print(operand.getTerm())

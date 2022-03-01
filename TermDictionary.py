@@ -10,7 +10,7 @@ class TermDictionary(object):
 
     def __init__(self, storageLocation):
         # In the form of {term: [docFrequency, [pointer1, pointer2, pointer3, ...]]} (during indexing)
-        # In the form of {term: [docFrequency, pointer], term2: [docFrequency, pointer], ..., "c0rpu5D1r3ct0ry": [all docIDs]} (after indexing)
+        # In the form of {term: [docFrequency, pointer], term2: [docFrequency, pointer], ..., "c0rpu5D1r3ct0ry": pointer} (after indexing)
         self.termInformation = {} 
         self.storageLocation = storageLocation
 
@@ -75,13 +75,13 @@ class TermDictionary(object):
             return 0
 
 
-    def addCorpusDocIDs(self, allDocIDs):
+    def addPointerToCorpusDocIDs(self, pointer):
         """
         Adds a list of all docIDs into the dictionary to facilitate NOT operations
         """
-        self.termInformation["c0rpu5D1r3ct0ry"] = allDocIDs
+        self.termInformation["c0rpu5D1r3ct0ry"] = pointer
 
 
-    def getCorpusDocIDs(self):
+    def getPointerToCorpusDocIDs(self):
         return self.termInformation["c0rpu5D1r3ct0ry"]
     

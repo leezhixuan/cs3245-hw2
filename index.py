@@ -56,7 +56,14 @@ def build_index(in_dir, out_dict, out_postings):
 
     implementSkipPointers(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
-    result.addCorpusDocIDs(sortedDocIDs) #add all docIDs in the corpus to the dictionary
+    # adds pointer to all docIDs in corpus after saving it into postings.txt
+    with open(out_postings, 'ab') as f:
+        pointer = f.tell()
+        print(pointer)
+        result.addPointerToCorpusDocIDs(pointer)
+        pickle.dump([Node(n) for n in sortedDocIDs], f)
+    f.close()
+
     result.save()
     os.remove(tempFile)
 
