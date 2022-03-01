@@ -14,3 +14,5 @@ NOT NOT vista
 NOT (A AND B)
 NOT NOT (A AND B)
 M4F1A5
+the AND a AND they AND why
+he AND she AND run AND they AND her

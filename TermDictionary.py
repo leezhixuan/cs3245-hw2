@@ -9,7 +9,9 @@ class TermDictionary(object):
     POINTERS_INDEX = 1
 
     def __init__(self, storageLocation):
-        self.termInformation = {} # In the form of {term: [docFrequency, [pointer1, pointer2, pointer3, ...]]}
+        # In the form of {term: [docFrequency, [pointer1, pointer2, pointer3, ...]]} (during indexing)
+        # In the form of {term: [docFrequency, pointer], term2: [docFrequency, pointer], ..., "c0rpu5D1r3ct0ry": [all docIDs]} (after indexing)
+        self.termInformation = {} 
         self.storageLocation = storageLocation
 
 

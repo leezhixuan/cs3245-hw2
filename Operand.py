@@ -7,29 +7,10 @@ class Operand(object):
     def __init__(self, term=None, result=None):
         self.term = term
         self.result = result
-        # self.docFreq = docFreq
 
 
     def __repr__(self):
         return str(self.term)
-
-    # def __eq__(self, other):
-    #     return self.docFreq == other.docFreq
-
-    # def __ne__(self, other):
-    #     return self.docFreq != other.docFreq
-
-    # def __lt__(self, other):
-    #     return self.docFreq < other.docFreq
-
-    # def __le__(self, other):
-    #     return self.docFreq <= other.docFreq
-
-    # def __gt__(self, other):
-    #     return self.docFreq > other.docFreq
-
-    # def __ge__(self, other):
-    #     return self.docFreq >= other.docFreq
 
 
     def isTerm(self):

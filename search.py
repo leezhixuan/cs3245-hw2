@@ -124,8 +124,9 @@ def evaluateRPN(RPNexpression, dict_file, postings_file):
 
 
 def optimisedEvalAND(processStack, RPNExpression, dict_file, postings_file):
-    # RPN is a purely conjunctive query
-    # processStack = sorted([Operand(term=t, result=None, docFreq=dict_file.getTermDocFrequency(t)) for t in list(filter(lambda a: a!= "AND", RPNExpression))])
+    """
+    This evaluates purely conjunctive queries based in ascending document frequency for space efficiency.
+    """
     processStack = [Operand(term=t, result=None) for t in sorted(list(filter(lambda a: a!= "AND", RPNExpression)), key=dict_file.getTermDocFrequency, reverse=True)]
     
     while len(processStack) > 1:
@@ -168,39 +169,6 @@ def retrievePostingsList(file, pointer):
 
     return postingsList
 
-
-# def evalAND(operand1, operand2, dictFile, postingsFile):
-#     """
-#     input: TermDictionary as dictFile
-#     input: name of posting file as postingsFile
-#     output: Operand containing result
-#     Calls evalAND_terms/evalAND_term_result/evalAND_results depending on operand types
-#     """
-#     # Both inputs are terms
-#     if operand1.isTerm() and operand2.isTerm():
-#         term1, term2 = operand1.getTerm(), operand2.getTerm()
-#         result = evalAND_terms(term1, term2, dictFile, postingsFile)
-
-#     # Input 1 is term, Input 2 is result
-#     elif operand1.isTerm() and operand2.isResult():
-#         term = operand1.getTerm()
-#         res = operand2.getResult()
-#         result = evalAND_term_result(term, res, dictFile, postingsFile)
-
-#     # Input 2 is term, Input 1 is result
-#     elif operand2.isTerm() and operand1.isResult():
-#         term = operand2.getTerm()
-#         res = operand1.getResult()
-#         result = evalAND_term_result(term, res, dictFile, postingsFile)
-
-#     # Both inputs are results
-#     else:
-#         result1 = operand1.getResult()
-#         result2 = operand2.getResult()
-#         result = evalAND_results(result1, result2)
-
-#     return Operand(term=None, result=result)
-
 def evalAND(operand1, operand2, dictFile, postingsFile):
     """
     input: TermDictionary as dictFile
@@ -233,38 +201,6 @@ def evalAND(operand1, operand2, dictFile, postingsFile):
 
     return Operand(term=None, result=result)
 
-
-# def evalOR(operand1, operand2, dictFile, postingsFile):
-#     """
-#     input: TermDictionary as dictFile
-#     input: name of posting file as postingsFile
-#     output: Operand containing result
-#     Calls evalOR_terms/evalOR_term_result/evalOR_results depending on operand types
-#     """
-#     # Both inputs are terms
-#     if operand1.isTerm() and operand2.isTerm():
-#         term1, term2 = operand1.getTerm(), operand2.getTerm()
-#         result = evalOR_terms(term1, term2, dictFile, postingsFile)
-
-#     # Input 1 is term, Input 2 is result
-#     elif operand1.isTerm() and operand2.isResult():
-#         term = operand1.getTerm()
-#         res = operand2.getResult()
-#         result = evalOR_term_result(term, res, dictFile, postingsFile)
-
-#     # Input 2 is term, Input 1 is result
-#     elif operand2.isTerm() and operand1.isResult():
-#         term = operand2.getTerm()
-#         res = operand1.getResult()
-#         result = evalOR_term_result(term, res, dictFile, postingsFile)
-
-#     # Both inputs are results
-#     else:
-#         result1 = operand1.getResult()
-#         result2 = operand2.getResult()
-#         result = evalOR_results(result1, result2)
-
-#     return Operand(term=None, result=result)
 
 def evalOR(operand1, operand2, dictFile, postingsFile):
     """
@@ -307,35 +243,6 @@ def evalOR(operand1, operand2, dictFile, postingsFile):
     return Operand(term=None, result=result)
 
 
-# def evalNOT(operand, dictFile, postingsFile):
-#     """
-#     input: TermDictionary as dictFile
-#     input: name of posting file as postingsFle
-#     output: Operand containing result
-#     """
-#     allDocIDs = dictFile.getCorpusDocIDs()
-#     result = []
-#     if operand.isTerm():
-#         # print(operand.getTerm())
-#         pointerList = dictFile.getTermPointers(operand.getTerm())
-#         termDocIDs = []
-#         for pointer in pointerList:
-#             # print(termDocIDs)
-#             partialDocIDNodes = retrievePostingsList(postingsFile, pointer)
-#             termDocIDs.extend([node.getDocID() for node in partialDocIDNodes])
-        
-#         # here, we will have all the docIDs of a term in termDocIDs
-#         setOfTermDocIDs = set(termDocIDs)
-        
-#     else:  # Operand is result; a list of docIDs
-#         setOfTermDocIDs = set(operand.getResult())
-        
-#     for ID in allDocIDs:
-#         if ID not in setOfTermDocIDs:
-#             result.append(ID)
-
-#     return Operand(term=None, result=result)
-
 def evalNOT(operand, dictFile, postingsFile):
     """
     input: TermDictionary as dictFile
@@ -359,18 +266,6 @@ def evalNOT(operand, dictFile, postingsFile):
     return Operand(term=None, result=result)
 
 
-# def evalTerm(term, dictFile, postingsFile):
-#     """
-#     Given a term, returns a list of docIDs that contains the term.
-#     """
-#     result = []
-#     pointerList = dictFile.getTermPointers(term.getTerm())
-#     for pointer in pointerList:
-#         partialDocIDs = retrievePostingsList(postingsFile, pointer)
-#         result.extend(partialDocIDs)
-
-#     return Operand(term=None, result=result)
-
 def evalTerm(term, dictFile, postingsFile):
     """
     Given a term, returns a list of docIDs that contains the term.
@@ -378,81 +273,6 @@ def evalTerm(term, dictFile, postingsFile):
     pointer = dictFile.getTermPointer(term.getTerm())
     result = sorted([Node.getDocID(n) for n in retrievePostingsList(postingsFile, pointer)])
     return Operand(term=None, result=result)
-
-
-
-# def evalOR_terms(term1, term2, dictFile, postingsFile):
-#     """
-#     Computes and returns the union of the postings lists of the 2 terms provided.
-#     """
-#     result = set()
-#     pointer1 = dictFile.getTermPointers(term1)
-#     pointer2 = dictFile.getTermPointers(term2)
-
-#     if len(pointer1) == 0 and len(pointer2) > 0: # term1 does not exist in the corpus
-#         return sorted(set(pointer2))
-#     elif len(pointer2) == 0 and len(pointer1) > 0: # term2 does not exist in the corpus
-#         return sorted(set(pointer1))
-#     elif len(pointer1) == 0 and len(pointer2) == 0: # both term1 and term2 do not exist in the corpus
-#         return sorted(result)
-    
-#     # else, pointer1 and pointer2 are not empty lists
-#     termsParsed, i = 0, 0  # termsParsed allows us to check through all chunks, i to obtain the corresponding postings
-
-#     while True:
-#         # Parse postings chunk by chunk, where each chunk is 1024 entries
-#         if termsParsed <= dictFile.getTermDocFrequency(term1) or termsParsed <= dictFile.getTermDocFrequency(term2):
-#             if termsParsed <= dictFile.getTermDocFrequency(term1) and termsParsed <= dictFile.getTermDocFrequency(term2):
-#                 pl1 = retrievePostingsList(postingsFile, pointer1[i])
-#                 pl2 = retrievePostingsList(postingsFile, pointer2[i])
-#             elif termsParsed <= dictFile.getTermDocFrequency(term1):
-#                 pl1 = retrievePostingsList(postingsFile, pointer1[i])
-#                 pl2 = []
-#             else:
-#                 pl1 = []
-#                 pl2 = retrievePostingsList(postingsFile, pointer2[i])
-#         else:
-#             break
-
-#         while pl1 != [] or pl2 != []:
-#             if not pl1:  # if postings list for operand 1 is empty, append that of operand 2 behind
-#                 result.add(Node.getDocID(pl2[0]))
-#                 pl2 = pl2[1:]
-#             elif not pl2:  # if postings list for operand 2 is empty, append that of operand 1 behind
-#                 result.add(Node.getDocID(pl1[0]))
-#                 pl1 = pl1[1:]
-#             else:  # Main OR function, union
-#                 result.add(Node.getDocID(pl1[0]))
-#                 result.add(Node.getDocID(pl2[0]))
-#                 pl1, pl2 = pl1[1:], pl2[1:]
-#         termsParsed += 1024
-#         i += 1
-#     return sorted(result)
-
-
-# def evalOR_term_result(term, res, dictFile, postingsFile):
-#     """
-#     Computes and returns the union of the postings list of the term and 
-#     result list provided.
-#     """
-#     result = set(res)
-#     pointer = dictFile.getTermPointers(term)
-#     if len(pointer) == 0:  # term does not exist in the corpus
-#         return sorted(result)
-
-#     # Retrieve posting lists
-#     if dictFile.getTermDocFrequency(term) <= 1024:
-#         nodes = retrievePostingsList(postingsFile, pointer[0])
-#         pl = [node.getDocID() for node in nodes]
-#     else:
-#         pl = []
-#         for p in pointer:
-#             nodes = retrievePostingsList(postingsFile, p)
-#             pl.extend([node.getDocID() for node in nodes])
-
-#     # Union both sets
-#     result.update(set(pl))
-#     return sorted(result)
 
 
 def evalOR_results(result1, result2):
@@ -463,55 +283,6 @@ def evalOR_results(result1, result2):
     result.update(set(result2))  # Union both sets
     return sorted(result)
 
-
-# def evalAND_terms(term1, term2, dictFile, postingsFile):
-#     """
-#     Computes and returns the intersection of the postings lists of the 2 terms provided.
-#     """
-#     result = set()
-#     pointer1 = dictFile.getTermPointers(term1)
-#     pointer2 = dictFile.getTermPointers(term2)
-
-#     if len(pointer1) == 0 or len(pointer2) == 0:  # either term1 or term2, or both do not exist in the corpus.
-#         return sorted(result)
-
-#     # else, pointer1 and pointer2 are not empty lists
-#     termsParsed, i = 0, 0  # termsParsed allows us to check through all chunks, i to obtain the corresponding postings
-
-#     while True:
-#         # Parse postings chunk by chunk, where each chunk is 1024 entries
-#         if termsParsed <= dictFile.getTermDocFrequency(term1) or termsParsed <= dictFile.getTermDocFrequency(term2):
-#             if termsParsed <= dictFile.getTermDocFrequency(term1) and termsParsed <= dictFile.getTermDocFrequency(term2):
-#                 pl1 = retrievePostingsList(postingsFile, pointer1[i])
-#                 pl2 = retrievePostingsList(postingsFile, pointer2[i])
-#             elif termsParsed <= dictFile.getTermDocFrequency(term1):
-#                 pl1 = retrievePostingsList(postingsFile, pointer1[i])
-#             else:
-#                 pl2 = retrievePostingsList(postingsFile, pointer2[i])
-#         else:
-#             break
-
-#         while pl1 != [] and pl2 != []:
-#             if Node.getDocID(pl1[0]) == Node.getDocID(pl2[0]):  # Intersection, add to results
-#                 result.add(Node.getDocID(pl1[0]))
-#                 pl1, pl2 = pl1[1:], pl2[1:]
-#             else:
-#                 # Advance list with smaller docID
-#                 if Node.getDocID(pl1[0]) < Node.getDocID(pl2[0]):
-#                     # Check if skip pointers exist, and use if feasible
-#                     if Node.hasSkip(pl1[0]) and Node.getDocID(pl1[pl1[0].skipPointer]) < Node.getDocID(pl2[0]):
-#                         pl1 = pl1[pl1[0].skipPointer:]
-#                     else:
-#                         pl1 = pl1[1:]
-#                 else:
-#                     # Check if skip pointers exist, and use if feasible
-#                     if Node.hasSkip(pl2[0]) and Node.getDocID(pl2[pl2[0].skipPointer]) < Node.getDocID(pl1[0]):
-#                         pl2 = pl2[pl2[0].skipPointer:]
-#                     else:
-#                         pl2 = pl2[1:]
-#         termsParsed += 1024
-#         i += 1
-#     return sorted(result)
 
 def evalAND_terms(term1, term2, dictFile, postingsFile):
     """
@@ -549,46 +320,6 @@ def evalAND_terms(term1, term2, dictFile, postingsFile):
     
     return sorted(result)
 
-
-# def evalAND_term_result(term, res, dictFile, postingsFile):
-#     """
-#     Computes and returns the intersection of the postings list of the term and 
-#     result list provided.
-#     """
-#     result = set()
-#     pointer = dictFile.getTermPointers(term)
-#     termsParsed, i = 0, 0  # termsParsed allows us to check through all chunks, i to obtain the corresponding postings
-
-#     if len(pointer) == 0:  # if term does not exist in the corpus
-#         return sorted(set())
-
-#     # else, pointer1 and pointer2 are not empty lists
-
-#     while True:
-#         # Parse postings chunk by chunk, where each chunk is 1024 entries
-#         if termsParsed <= dictFile.getTermDocFrequency(term):
-#             pl = retrievePostingsList(postingsFile, pointer[i])
-#         else:
-#             break
-
-#         while pl != [] and res != []:
-#             if Node.getDocID(pl[0]) == res[0]:  # Intersection, add to results
-#                 result.add(res[0])
-#                 pl, res = pl[1:], res[1:]
-#             else:
-#                 # Advance list with smaller docID
-#                 if Node.getDocID(pl[0]) < res[0]:
-#                     # Check if skip pointers exist, and use if feasible
-#                     if Node.hasSkip(pl[0]) and Node.getDocID(pl[pl[0].skipPointer]) < res[0]:
-#                         pl = pl[pl[0].skipPointer:]
-#                     else:
-#                         pl = pl[1:]
-#                 else:
-#                     res = res[1:]
-#         termsParsed += 1024
-#         i += 1
-
-#     return sorted(result)
 
 def evalAND_term_result(term, res, dictFile, postingsFile):
     """
