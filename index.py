@@ -79,6 +79,35 @@ def generateTermArray(dir, doc):
     return terms
 
 
+# def implementSkipPointers(out_postings, file, termDictionary):
+#     """
+#     Add skip pointers to the postings lists present in file, update pointers in termDictionary and
+#     save the new postings lists (with skip pointers) into out_postings
+#     """
+#     with open(file, 'rb') as ref:
+#         with open(out_postings, 'wb') as output:
+
+#             termDict = termDictionary.getTermDict()
+#             for term in termDict:
+#                 pointers = termDict[term][1]
+
+#                 newPointers = []
+#                 for pointer in pointers:
+#                     ref.seek(pointer)
+#                     postings = pickle.load(ref) # loads the array of docIDs
+
+#                     postingsWithSP = insertSkipPointers(postings, len(postings))
+
+#                     newPointer = output.tell() # new pointer location
+#                     pickle.dump(postingsWithSP, output) 
+#                     newPointers.append(newPointer)
+
+#                 termDictionary.updatePointerList(term, newPointers) 
+
+#         output.close()
+#     ref.close()
+
+
 def implementSkipPointers(out_postings, file, termDictionary):
     """
     Add skip pointers to the postings lists present in file, update pointers in termDictionary and
@@ -91,18 +120,18 @@ def implementSkipPointers(out_postings, file, termDictionary):
             for term in termDict:
                 pointers = termDict[term][1]
 
-                newPointers = []
+                docIDs = []
+                # newPointers = []
                 for pointer in pointers:
                     ref.seek(pointer)
                     postings = pickle.load(ref) # loads the array of docIDs
 
-                    postingsWithSP = insertSkipPointers(postings, len(postings))
+                    docIDs.extend(postings) # merge postings
 
-                    newPointer = output.tell() # new pointer location
-                    pickle.dump(postingsWithSP, output) 
-                    newPointers.append(newPointer)
-
-                termDictionary.updatePointerList(term, newPointers) 
+                postingsWithSP = insertSkipPointers(sorted(set(docIDs)), len(docIDs)) # insert skip pointers
+                newPointer = output.tell() # new pointer location
+                pickle.dump(postingsWithSP, output)
+                termDictionary.updatePointerToPostings(term, newPointer) 
 
         output.close()
     ref.close()
