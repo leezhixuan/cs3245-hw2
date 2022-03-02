@@ -115,7 +115,3 @@ def binaryMerge(dir, fileIDs, outputPostingsFile, outputDictFile):
     StageOfLeftoverFiles = stage + 1
     os.rename(dir + 'tempDictionaryFile' + str(IDOfLeftoverFiles) + '_stage' + str(StageOfLeftoverFiles) + '.txt', outputDictFile)
     os.rename(dir + 'tempPostingFile' + str(IDOfLeftoverFiles) + '_stage' + str(StageOfLeftoverFiles) + '.txt', outputPostingsFile)
-
-
-
-
