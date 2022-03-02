@@ -22,10 +22,11 @@ class TermDictionary(object):
         """
         if term in self.termInformation.keys(): # if given term already exists
             self.termInformation[term][self.DOCFREQ_INDEX] += docFrequency
-            self.termInformation[term][self.POINTERS_INDEX].append(pointer) # append new pointer to its existing list of pointers
+            # self.termInformation[term][self.POINTERS_INDEX].append(pointer) # append new pointer to its existing list of pointers
         
         else: # term does not exist
-            self.termInformation[term] = [docFrequency, [pointer]] # creates a new key-value pair in the dictionary.
+            # self.termInformation[term] = [docFrequency, [pointer]] # creates a new key-value pair in the dictionary.
+            self.termInformation[term] = [docFrequency, pointer] # creates a new key-value pair in the dictionary.
     
 
     def getTermPointer(self, term):
@@ -35,6 +36,10 @@ class TermDictionary(object):
             return termPointers
         except KeyError: # given term does not exist in the dictionary
             return -1
+
+
+    def getAllKeys(self):
+        return self.termInformation.keys()
     
 
     def save(self):
