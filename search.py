@@ -8,6 +8,7 @@ import pickle
 from TermDictionary import TermDictionary
 from Operand import Operand
 from Node import Node
+from SPIMI import retrievePostingsList
 
 
 def usage():
@@ -33,14 +34,12 @@ def run_search(dict_file, postings_file, queries_file, results_file):
                     RPNExpression = shuntingYard(query)
                     result = evaluateRPN(RPNExpression, termDict, postings_file)
                     allResult.append(result)
+
                 else:
                     allResult.append("") # blank queries
 
             outputResult = "\n".join(allResult) # to output all result onto a new line.
             resultFile.write(outputResult)
-
-        resultFile.close()
-    queryFile.close()
 
 
 def splitQuery(query):
@@ -51,11 +50,13 @@ def splitQuery(query):
     temp = nltk.tokenize.word_tokenize(query)
     stemmer = nltk.stem.porter.PorterStemmer() # stem query like how we stem terms in corpus
     result = []
+
     for term in temp:
         if not isOperator(term): # don't case-fold operators
             result.append(stemmer.stem(term.lower()))
         else: # term is an Operator
             result.append(term)
+
     return result
 
 
@@ -67,6 +68,7 @@ def shuntingYard(query):
     operatorStack = [] #enters from the back, exits from the back
     output = []
     queryTerms = splitQuery(query)
+
     for term in queryTerms:
         if term == '(':
             operatorStack.append(term)
@@ -80,8 +82,10 @@ def shuntingYard(query):
             operatorStack.append(term)
         else:
             output.append(term)
+
     while(len(operatorStack) > 0): 
         output.append(operatorStack.pop())
+
     return output
 
 
@@ -127,6 +131,7 @@ def optimisedEvalAND(processStack, RPNExpression, dict_file, postings_file):
     """
     This evaluates purely conjunctive queries based in ascending document frequency for space efficiency.
     """
+    # filter out all operators (i.e. only AND), sort them according to docFrequency and convert them into an Operand object.
     processStack = [Operand(term=t, result=None) for t in sorted(list(filter(lambda a: a!= "AND", RPNExpression)), key=dict_file.getTermDocFrequency, reverse=True)]
     
     while len(processStack) > 1:
@@ -153,21 +158,6 @@ def isOperator(term):
     operators = ["NOT", "AND", "OR"]
     return term in operators
 
-
-def retrievePostingsList(file, pointer):
-    """
-    Given a pointer to determine the location in disk, 
-    retrieves the postings list from that location.
-    """
-    if pointer == -1: # for non-existent terms
-        return []
-
-    with open(file, 'rb') as f:
-        f.seek(pointer)
-        postingsList = pickle.load(f)
-    f.close()
-
-    return postingsList
 
 def evalAND(operand1, operand2, dictFile, postingsFile):
     """
@@ -252,6 +242,7 @@ def evalNOT(operand, dictFile, postingsFile):
     pointerToAllDocIDs = dictFile.getPointerToCorpusDocIDs()
     allDocIDs = [Node.getDocID(n) for n in retrievePostingsList(postingsFile, pointerToAllDocIDs)]
     result = []
+    
     if operand.isTerm():
         # print(operand.getTerm())
         pointer = dictFile.getTermPointer(operand.getTerm())

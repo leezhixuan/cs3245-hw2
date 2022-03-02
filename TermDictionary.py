@@ -9,7 +9,7 @@ class TermDictionary(object):
     POINTERS_INDEX = 1
 
     def __init__(self, storageLocation):
-        # In the form of {term: [docFrequency, [pointer1, pointer2, pointer3, ...]]} (during indexing)
+        # In the form of {term: [docFrequency, pointer], term2: [docFrequency, pointer], ..., termN: [docFrequency, pointer]}
         # In the form of {term: [docFrequency, pointer], term2: [docFrequency, pointer], ..., "c0rpu5D1r3ct0ry": [all docIDs]} (after indexing)
         self.termInformation = {} 
         self.storageLocation = storageLocation
@@ -22,10 +22,8 @@ class TermDictionary(object):
         """
         if term in self.termInformation.keys(): # if given term already exists
             self.termInformation[term][self.DOCFREQ_INDEX] += docFrequency
-            # self.termInformation[term][self.POINTERS_INDEX].append(pointer) # append new pointer to its existing list of pointers
         
         else: # term does not exist
-            # self.termInformation[term] = [docFrequency, [pointer]] # creates a new key-value pair in the dictionary.
             self.termInformation[term] = [docFrequency, pointer] # creates a new key-value pair in the dictionary.
     
 
@@ -34,6 +32,7 @@ class TermDictionary(object):
             # if given term exists in the dictionary
             termPointers = self.termInformation[term][self.POINTERS_INDEX]
             return termPointers
+            
         except KeyError: # given term does not exist in the dictionary
             return -1
 
@@ -48,7 +47,6 @@ class TermDictionary(object):
         """
         with open(self.storageLocation, 'wb') as f:
             pickle.dump(self.termInformation, f)
-        f.close()
 
 
     def load(self):
@@ -57,7 +55,6 @@ class TermDictionary(object):
         """
         with open(self.storageLocation, 'rb') as f:
             self.termInformation = pickle.load(f)
-        f.close()
 
 
     def updatePointerToPostings(self, term, newPointer):
@@ -76,6 +73,7 @@ class TermDictionary(object):
             # if term exists in the dictionary
             docFrequency = self.termInformation[term][self.DOCFREQ_INDEX]
             return docFrequency
+
         except KeyError: # term does not exist in the dictionary
             return 0
 
