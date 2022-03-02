@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import shutil
 import nltk
 import sys
 import getopt
@@ -8,6 +9,7 @@ import math
 
 from TermDictionary import TermDictionary
 from Node import Node
+from SPIMI import *
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -21,54 +23,61 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
 
     tempFile = 'temp.txt'
-    limit = 1024 # max number of terms in each postings list
+    tempPostingsDirectory = "tempPostingsDirectory/"
+    limit = 1024 # max number of docs to be processed at any 1 time.
     result = TermDictionary(out_dict)
 
-    sortedDocIDs = sorted([int(doc) for doc in os.listdir(in_dir)])
-    tempDict = {}
-    for doc in sortedDocIDs:
-        terms = generateTermArray(in_dir, doc) # returns an array of terms present in that particular doc
+    # set up temp directory for SPIMI process
+    if not os.path.exists(tempPostingsDirectory):
+        os.mkdir(tempPostingsDirectory)
+    else:
+        shutil.rmtree(tempPostingsDirectory) #delete the specified directory tree for re-indexing purposes
+        os.mkdir(tempPostingsDirectory)
 
-        for term in terms:
-            # each term has an array of sets. Each set contains at most 1024 unique docID
-            if term not in tempDict.keys():
-                tempDict[term] = [set([doc])] 
-            
-            else:
-                # if term not in termTracker[term]:
-                if (min(len(s) for s in tempDict[term]) < limit):
-                    currentSetIndex = len(tempDict[term]) - 1
-                    tempDict[term][currentSetIndex].add(doc)
-
-                else:
-                    # all preceding sets are full, hence the need for a new set.
-                    tempDict[term].append(set([doc]))
-
-    # end of processing all docs
-    with open(tempFile, 'wb') as f:
-        for term, postingLists in sorted(tempDict.items()):
-            for pL in postingLists:
-                pointer = f.tell() # current location in disk
-                result.addTerm(term, len(pL), pointer) # create/update entry in resultant dictionary (i.e dictionary.txt)
-                pickle.dump(sorted(list(pL)), f) # save current postings list onto disk, into temp.txt
+    sortedDocIDs = sorted([int(doc) for doc in os.listdir(in_dir)]) #sorted list of all docIDs in corpus
+    fileID = 0
+    stageOfMerge = 0
+    count = 0
+    tokenStream = []
     
-    f.close()
+    for docID in sortedDocIDs:
+        if limit > count: # no. of docs not yet at the limit
+            tokens = generateTokenStream(in_dir, docID) # returns an array of terms present in that particular doc
+            tokenStream.extend(tokens)
+            count+=1
+        else: # no. of docs == limit
+            outputPostingsFile = tempPostingsDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+            outputDictionaryFile = tempPostingsDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+            SPIMIInvert(tokenStream, outputPostingsFile, outputDictionaryFile)
+            fileID+=1
+            count = 0
+            tokenStream = []
+    
+    if count > 0: # in case the number of files isnt a multiple of the limit set
+        outputPostingsFile = tempPostingsDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+        outputDictionaryFile = tempPostingsDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+        SPIMIInvert(tokenStream, outputPostingsFile, outputDictionaryFile)
+        fileID+=1 # passed into binary merge, and it will be for i in range(0, fileID, 2) --> will cover everything
+
+    #inverting done. Tons of dict files and postings files to merge
+    binaryMerge(tempPostingsDirectory, fileID, tempFile, out_dict)
+    result = TermDictionary(out_dict)
+    result.load()
 
     implementSkipPointers(out_postings, tempFile, result) # add skip pointers to posting list and save them to postings.txt
     
-    # adds pointer to all docIDs in corpus after saving it into postings.txt
-    with open(out_postings, 'ab') as f:
+    # add all docIDs into output postings file, and store a pointer in the resultant dictionary.
+    with open(out_postings, 'ab') as f: # append to postings file
         pointer = f.tell()
-        print(pointer)
         result.addPointerToCorpusDocIDs(pointer)
         pickle.dump([Node(n) for n in sortedDocIDs], f)
-    f.close()
 
     result.save()
+
     os.remove(tempFile)
+    shutil.rmtree(tempPostingsDirectory, ignore_errors=True)
 
-
-def generateTermArray(dir, doc):
+def generateTokenStream(dir, docID):
     """
     Given a document and the directory, we stem all terms present in 
     the document by stemming them, then output the stemmed terms as an array
@@ -76,14 +85,14 @@ def generateTermArray(dir, doc):
     stemmer = nltk.stem.porter.PorterStemmer()
 
     terms = []
-    with open(os.path.join(dir, str(doc))) as file:
+    with open(os.path.join(dir, str(docID))) as file:
         sentences = nltk.tokenize.sent_tokenize(file.read())
         for sentence in sentences:
             words = nltk.tokenize.word_tokenize(sentence)
             for word in words:
-                terms.append(stemmer.stem(word.lower())) # stemming + case-folding
+                terms.append((stemmer.stem(word.lower()), docID)) # stemming + case-folding
 
-    return terms
+    return terms # a list of processed terms in the form of  [(term1, docID), (term2, docID), ...]
 
 
 def implementSkipPointers(out_postings, file, termDictionary):
@@ -96,22 +105,15 @@ def implementSkipPointers(out_postings, file, termDictionary):
 
             termDict = termDictionary.getTermDict()
             for term in termDict:
-                pointers = termDict[term][1] #retrieves the list of pointers associated to the term
-
-                docIDs = []
-                for pointer in pointers:
-                    ref.seek(pointer)
-                    postings = pickle.load(ref) # loads the array of docIDs
-
-                    docIDs.extend(postings) # merge postings
+                pointer = termDict[term][1] #retrieves the list of pointers associated to the term
+                ref.seek(pointer)
+                docIDs = pickle.load(ref)
 
                 postingsWithSP = insertSkipPointers(sorted(set(docIDs)), len(docIDs)) # insert skip pointers
                 newPointer = output.tell() # new pointer location
                 pickle.dump(postingsWithSP, output)
                 termDictionary.updatePointerToPostings(term, newPointer) # term entry is now --> term : [docFreq, pointer]
 
-        output.close()
-    ref.close()
 
 
 def insertSkipPointers(postings, length):
