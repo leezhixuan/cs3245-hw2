@@ -15,7 +15,7 @@ def SPIMIInvert(tokenStream, outputFile, dictFile):
     for termDocIDPair in tokenStream: # tokenStream is in the form of [(term1, docID), (term2, docID), ...]
         term = termDocIDPair[0]
         docID = termDocIDPair[1]
-        if termDocIDPair[0] not in tempDict:
+        if term not in tempDict:
             tempDict[term] = set([docID])
         else:
             tempDict[term].add(docID) # duplicate docIDs will not be added into Sets
@@ -24,7 +24,7 @@ def SPIMIInvert(tokenStream, outputFile, dictFile):
     with open(outputFile, 'wb') as f:
         for term in sorted(tempDict): # {term : set(docIDs)}
             pointer = f.tell()
-            pickle.dump(list(tempDict[term]), f) # store list of docIDs into outputFile
+            pickle.dump(sorted(tempDict[term]), f) # store list of docIDs into outputFile
             termDict.addTerm(term, len(tempDict[term]), pointer) # update TermDictionary
     
     termDict.save()

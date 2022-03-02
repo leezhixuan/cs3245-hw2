@@ -41,17 +41,17 @@ def build_index(in_dir, out_dict, out_postings):
     tokenStream = []
     
     for docID in sortedDocIDs:
-        if limit > count: # no. of docs not yet at the limit
-            tokens = generateTokenStream(in_dir, docID) # returns an array of terms present in that particular doc
-            tokenStream.extend(tokens)
-            count+=1
-        else: # no. of docs == limit
+        tokens = generateTokenStream(in_dir, docID) # returns an array of terms present in that particular doc
+        tokenStream.extend(tokens)
+        count+=1
+
+        if count == limit: # no. of docs == limit
             outputPostingsFile = workingDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
             outputDictionaryFile = workingDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
             SPIMIInvert(tokenStream, outputPostingsFile, outputDictionaryFile)
             fileID+=1
-            count = 0
-            tokenStream = []
+            count = 0 # reset counter
+            tokenStream = [] #clear tokenStream
     
     if count > 0: # in case the number of files isnt a multiple of the limit set
         outputPostingsFile = workingDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'

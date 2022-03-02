@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-from concurrent.futures import process
 import nltk
 import sys
 import getopt
@@ -8,7 +6,6 @@ import pickle
 from TermDictionary import TermDictionary
 from Operand import Operand
 from Node import Node
-from SPIMI import retrievePostingsList
 
 
 def usage():
@@ -34,7 +31,6 @@ def run_search(dict_file, postings_file, queries_file, results_file):
                     RPNExpression = shuntingYard(query)
                     result = evaluateRPN(RPNExpression, termDict, postings_file)
                     allResult.append(result)
-
                 else:
                     allResult.append("") # blank queries
 
@@ -50,13 +46,11 @@ def splitQuery(query):
     temp = nltk.tokenize.word_tokenize(query)
     stemmer = nltk.stem.porter.PorterStemmer() # stem query like how we stem terms in corpus
     result = []
-
     for term in temp:
         if not isOperator(term): # don't case-fold operators
             result.append(stemmer.stem(term.lower()))
         else: # term is an Operator
             result.append(term)
-
     return result
 
 
@@ -69,22 +63,30 @@ def shuntingYard(query):
     output = []
     queryTerms = splitQuery(query)
 
-    for term in queryTerms:
-        if term == '(':
-            operatorStack.append(term)
-        elif term == ')':
-            while (len(operatorStack) > 0 and operatorStack[len(operatorStack) - 1] != "("):
-                output.append(operatorStack.pop())
-            operatorStack.pop() # discards "("
-        elif isOperator(term):
-            while (len(operatorStack) > 0 and operatorStack[len(operatorStack) - 1] != "(" and isOfGreaterPrecedence(operatorStack[len(operatorStack) - 1], term)):
-                output.append(operatorStack.pop())
-            operatorStack.append(term)
-        else:
-            output.append(term)
+    try: 
+        for term in queryTerms:
+            if term == '(':
+                operatorStack.append(term)
+            elif term == ')':
+                while (len(operatorStack) > 0 and operatorStack[len(operatorStack) - 1] != "("):
+                    output.append(operatorStack.pop())
+                operatorStack.pop() # discards "("
+            elif isOperator(term):
+                while (len(operatorStack) > 0 and operatorStack[len(operatorStack) - 1] != "(" and isOfGreaterPrecedence(operatorStack[len(operatorStack) - 1], term)):
+                    output.append(operatorStack.pop())
+                operatorStack.append(term)
+            else:
+                output.append(term)
+
+    except IndexError: # more closing brackets than opening brackets --> invalid queries
+        operatorStack = []
+        output = []
 
     while(len(operatorStack) > 0): 
         output.append(operatorStack.pop())
+
+    if ("(" in output or ")" in output): # handles unclosed brackets --> invalid queries
+        output = []
 
     return output
 
@@ -93,53 +95,67 @@ def evaluateRPN(RPNexpression, dict_file, postings_file):
     """
     evaluates the input expression (in reverse polish expression) and returns an array of docIDs found
     """
-    processStack = [] #enters from the back, exits from the back
+    if len(RPNexpression) == 0:
+        return ""
 
-    if ("OR" not in RPNexpression) and ("NOT" not in RPNexpression):
+    processStack = [] #enters from the back, exits from the back
+    
+    if ("AND" in RPNexpression) and ("OR" not in RPNexpression) and ("NOT" not in RPNexpression): # checks if it is a purely conjunctive query
         processStack = optimisedEvalAND(processStack, RPNexpression, dict_file, postings_file)
 
     else: 
         for qTerm in RPNexpression:
-            if isOperator(qTerm):
-                if qTerm == "NOT": # unary operator
-                    operand1 = processStack.pop()
-                    processStack.append(evalNOT(operand1, dict_file, postings_file))
-                elif qTerm == "AND": # binary operator
-                    operand1 = processStack.pop()
-                    operand2 = processStack.pop()
-                    processStack.append(evalAND(operand1, operand2, dict_file, postings_file))
-                else: # qTerm is "OR", a binary operator
-                    operand1 = processStack.pop()
-                    operand2 = processStack.pop()
-                    processStack.append(evalOR(operand1, operand2, dict_file, postings_file))
-            else: # qTerm is not an operator
-                operand = Operand(qTerm, result=None)
-                processStack.append(operand)
+            try: 
+                if isOperator(qTerm):
+                    if qTerm == "NOT": # unary operator
+                        operand1 = processStack.pop()
+                        processStack.append(evalNOT(operand1, dict_file, postings_file))
+                    elif qTerm == "AND": # binary operator
+                        operand1 = processStack.pop()
+                        operand2 = processStack.pop()
+                        processStack.append(evalAND(operand1, operand2, dict_file, postings_file))
+                    else: # qTerm is "OR", a binary operator
+                        operand1 = processStack.pop()
+                        operand2 = processStack.pop()
+                        processStack.append(evalOR(operand1, operand2, dict_file, postings_file))
+                else: # qTerm is not an operator
+                    operand = Operand(qTerm, result=None)
+                    processStack.append(operand)
+                    
+            except IndexError:
+                return ""
     
-    # at the end, the processStack will contain just 1 Operand, which could be an array of 
+    # at the end (for valid queries), the processStack will contain just 1 Operand, which could be an array of 
     # result already (in the case where the query is a combination e.g. "hi AND bye"), 
     # or simply just a term (in the case where the query is only 1 word e.g. "hello")
+    if len(processStack) == 1:
+        termOrResult = processStack[0] # covers the case where the query is a single term (e.g. "hi")
+        if termOrResult.isTerm():
+            processStack.append(evalTerm(processStack.pop(), dict_file, postings_file))
+            
+        return " ".join([str(docID) for docID in processStack.pop().getResult()])
 
-    termOrResult = processStack[0] # covers the case where the query is a single term (e.g. "hi")
-    if termOrResult.isTerm():
-        processStack.append(evalTerm(processStack.pop(), dict_file, postings_file))
-
-    return " ".join([str(docID) for docID in processStack.pop().getResult()])
+    else:
+        return ""
 
 
 def optimisedEvalAND(processStack, RPNExpression, dict_file, postings_file):
     """
     This evaluates purely conjunctive queries based in ascending document frequency for space efficiency.
     """
-    # filter out all operators (i.e. only AND), sort them according to docFrequency and convert them into an Operand object.
     processStack = [Operand(term=t, result=None) for t in sorted(list(filter(lambda a: a!= "AND", RPNExpression)), key=dict_file.getTermDocFrequency, reverse=True)]
+    processed = False # to take care of AND queries with only 1 term
     
-    while len(processStack) > 1:
+    while len(processStack) >= 2: 
+        processed = True
         operand1 = processStack.pop()
         operand2 = processStack.pop()
         processStack.append(evalAND(operand1, operand2, dict_file, postings_file))
     
-    return processStack
+    if processed:
+        return processStack
+
+    return []
 
     
 def isOfGreaterPrecedence(operator1, operator2):
@@ -158,6 +174,21 @@ def isOperator(term):
     operators = ["NOT", "AND", "OR"]
     return term in operators
 
+
+def retrievePostingsList(file, pointer):
+    """
+    Given a pointer to determine the location in disk, 
+    retrieves the postings list from that location.
+    """
+    if pointer == -1: # for non-existent terms
+        return []
+
+    with open(file, 'rb') as f:
+        f.seek(pointer)
+        postingsList = pickle.load(f)
+    f.close()
+
+    return postingsList
 
 def evalAND(operand1, operand2, dictFile, postingsFile):
     """
@@ -242,7 +273,6 @@ def evalNOT(operand, dictFile, postingsFile):
     pointerToAllDocIDs = dictFile.getPointerToCorpusDocIDs()
     allDocIDs = [Node.getDocID(n) for n in retrievePostingsList(postingsFile, pointerToAllDocIDs)]
     result = []
-    
     if operand.isTerm():
         # print(operand.getTerm())
         pointer = dictFile.getTermPointer(operand.getTerm())
@@ -271,8 +301,8 @@ def evalOR_results(result1, result2):
     """
     Computes and returns the union of the 2 result list provided.
     """
-    result = set(result1)
-    result.update(set(result2))  # Union both sets
+    result1Set = set(result1)
+    result = result1Set.union(set(result2))  # Union both sets
     return sorted(result)
 
 
