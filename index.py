@@ -23,16 +23,16 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
 
     tempFile = 'temp.txt'
-    tempPostingsDirectory = "tempPostingsDirectory/"
+    workingDirectory = "workingDirectory/"
     limit = 1024 # max number of docs to be processed at any 1 time.
     result = TermDictionary(out_dict)
 
     # set up temp directory for SPIMI process
-    if not os.path.exists(tempPostingsDirectory):
-        os.mkdir(tempPostingsDirectory)
+    if not os.path.exists(workingDirectory):
+        os.mkdir(workingDirectory)
     else:
-        shutil.rmtree(tempPostingsDirectory) #delete the specified directory tree for re-indexing purposes
-        os.mkdir(tempPostingsDirectory)
+        shutil.rmtree(workingDirectory) #delete the specified directory tree for re-indexing purposes
+        os.mkdir(workingDirectory)
 
     sortedDocIDs = sorted([int(doc) for doc in os.listdir(in_dir)]) #sorted list of all docIDs in corpus
     fileID = 0
@@ -46,21 +46,21 @@ def build_index(in_dir, out_dict, out_postings):
             tokenStream.extend(tokens)
             count+=1
         else: # no. of docs == limit
-            outputPostingsFile = tempPostingsDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
-            outputDictionaryFile = tempPostingsDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+            outputPostingsFile = workingDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+            outputDictionaryFile = workingDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
             SPIMIInvert(tokenStream, outputPostingsFile, outputDictionaryFile)
             fileID+=1
             count = 0
             tokenStream = []
     
     if count > 0: # in case the number of files isnt a multiple of the limit set
-        outputPostingsFile = tempPostingsDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
-        outputDictionaryFile = tempPostingsDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+        outputPostingsFile = workingDirectory + 'tempPostingFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
+        outputDictionaryFile = workingDirectory + 'tempDictionaryFile' + str(fileID) + '_stage' + str(stageOfMerge) + '.txt'
         SPIMIInvert(tokenStream, outputPostingsFile, outputDictionaryFile)
         fileID+=1 # passed into binary merge, and it will be for i in range(0, fileID, 2) --> will cover everything
 
     #inverting done. Tons of dict files and postings files to merge
-    binaryMerge(tempPostingsDirectory, fileID, tempFile, out_dict)
+    binaryMerge(workingDirectory, fileID, tempFile, out_dict)
     result = TermDictionary(out_dict)
     result.load()
 
@@ -75,7 +75,7 @@ def build_index(in_dir, out_dict, out_postings):
     result.save()
 
     os.remove(tempFile)
-    shutil.rmtree(tempPostingsDirectory, ignore_errors=True)
+    shutil.rmtree(workingDirectory, ignore_errors=True)
 
 def generateTokenStream(dir, docID):
     """
