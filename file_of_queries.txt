@@ -1,3 +1,4 @@
+vista
 vista AND the
 XP OR mac
 english AND offer AND aid
@@ -5,14 +6,25 @@ around AND NOT doubt AND thousand
 (product OR board) AND show AND month AND nil
 (product OR board) AND oat OR show AND month AND record AND martin
 NOT soybean AND record AND reuter AND champion
-vista
+NOT NOT vista
+NOT NOT (A AND B)
+bill OR NOT    Gates AND     (vista OR XP ) AND NOT (NOT mac)
 NOT (ship OR NOT bird) AND NOT window OR trees
-computers OR mops AND stove OR NOT television AND (hat OR NOT free)
 discount AND man OR NOT hand AND NOT (NOT gloves OR kelp)
 (please AND NOT hold) AND NOT red OR (black AND grey)
-NOT NOT vista
-NOT (A AND B)
-NOT NOT (A AND B)
-M4F1A5
-the AND a AND they AND why
-he AND she AND run AND they AND her
+(please
+please do not
+please AND NOT
+please AND NOT yes
+AND yes
+OR yes
+no OR yes
+no OR yes OR
+no OR yes AND NOT you
+no OR yes () AND you
+no OR ((yes) AND you
+no OR ((yes AND you
+no OR ((yes AND) you
+no OR ((yes AND)) you
+NOT (any)) AND tea
+computers OR mops AND stove OR NOT television AND (hat OR NOT free)
