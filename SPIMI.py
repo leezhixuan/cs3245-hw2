@@ -86,7 +86,7 @@ def binaryMerge(dir, fileIDs, outputPostingsFile, outputDictFile):
     """
     Performs binary merge on all files in the specified directory.
     """
-    for stage in range(math.ceil(math.log2(fileIDs))): # no. of times we merge is proportional to the unique fileIDs in the directory
+    for stage in range(math.ceil(math.log2(fileIDs))): # no. of times we merge is proportional to the no. of unique fileIDs in the directory
         newFileID = 0 # to merged file identifier
         for ID in range(0, fileIDs, 2): # merge files_docID with files_ID+1
             if ID + 1 < fileIDs:
@@ -111,8 +111,10 @@ def binaryMerge(dir, fileIDs, outputPostingsFile, outputDictFile):
 
     # here, i will only have 1 dictionary.txt and 1 postings.txt (the end)
     # move these out into the main directory.
-    os.rename(dir + 'tempDictionaryFile' + str(newFileID-1) + '_stage' + str(stage + 1) + '.txt', outputDictFile)
-    os.rename(dir + 'tempPostingFile' + str(newFileID-1) + '_stage' + str(stage + 1) + '.txt', outputPostingsFile)
+    IDOfLeftoverFiles = newFileID - 1
+    StageOfLeftoverFiles = stage + 1
+    os.rename(dir + 'tempDictionaryFile' + str(IDOfLeftoverFiles) + '_stage' + str(StageOfLeftoverFiles) + '.txt', outputDictFile)
+    os.rename(dir + 'tempPostingFile' + str(IDOfLeftoverFiles) + '_stage' + str(StageOfLeftoverFiles) + '.txt', outputPostingsFile)
 
 
 
